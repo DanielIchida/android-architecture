@@ -74,6 +74,9 @@ dependencies {
     compile "io.reactivex:rxandroid:$rootProject.rxandroidVersion"
     compile "com.squareup.sqlbrite:sqlbrite:$rootProject.sqlbriteVersion"
 
+    compile 'com.trello:rxlifecycle:0.6.1'
+
+
     // Dependencies for local unit tests
     testCompile "junit:junit:$rootProject.ext.junitVersion"
     testCompile "org.mockito:mockito-all:$rootProject.ext.mockitoVersion"

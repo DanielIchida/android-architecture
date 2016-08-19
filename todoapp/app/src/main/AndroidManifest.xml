@@ -15,9 +15,11 @@
   ~ limitations under the License.
   -->
 
-<manifest
-    package="com.example.android.architecture.blueprints.todoapp"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest package="com.example.android.architecture.blueprints.todoapp"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-sdk tools:overrideLibrary="com.trello.rxlifecycle, com.jakewharton.rxbinding"/>
 
     <application
         android:allowBackup="false"
