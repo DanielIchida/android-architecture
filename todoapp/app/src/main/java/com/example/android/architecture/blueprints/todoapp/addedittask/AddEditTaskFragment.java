@@ -16,8 +16,6 @@
 
 package com.example.android.architecture.blueprints.todoapp.addedittask;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -30,22 +28,38 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
+import com.google.common.base.Preconditions;
+
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
+import rx.subscriptions.CompositeSubscription;
 
 /**
  * Main UI for the add task screen. Users can enter a task title and description.
  */
-public class AddEditTaskFragment extends Fragment implements AddEditTaskContract.View {
+public class AddEditTaskFragment extends Fragment {
 
     public static final String ARGUMENT_EDIT_TASK_ID = "EDIT_TASK_ID";
 
-    private AddEditTaskContract.Presenter mPresenter;
-
+    @Nullable
     private TextView mTitle;
 
+    @Nullable
     private TextView mDescription;
 
+    @Nullable
     private String mEditedTaskId;
+
+    @Nullable
+    private CompositeSubscription mSubscriptions;
+
+    @Nullable
+    private AddEditTaskViewModel mViewModel;
 
     public static AddEditTaskFragment newInstance() {
         return new AddEditTaskFragment();
@@ -58,18 +72,42 @@ public class AddEditTaskFragment extends Fragment implements AddEditTaskContract
     @Override
     public void onResume() {
         super.onResume();
-        mPresenter.subscribe();
+        bind();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mPresenter.unsubscribe();
+        unbind();
     }
 
-    @Override
-    public void setPresenter(@NonNull AddEditTaskContract.Presenter presenter) {
-        mPresenter = checkNotNull(presenter);
+    private void bind() {
+        Preconditions.checkNotNull(mViewModel);
+
+        mSubscriptions = new CompositeSubscription();
+
+        mSubscriptions.add(mViewModel.getTask()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new Action1<Task>() {
+                    @Override
+                    public void call(Task task) {
+                        setTask(task);
+                    }
+                })
+                .doOnError(new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        showEmptyTaskError();
+                    }
+                })
+                .subscribe());
+    }
+
+    private void unbind() {
+        Preconditions.checkNotNull(mSubscriptions);
+
+        mSubscriptions.unsubscribe();
     }
 
     @Override
@@ -78,6 +116,8 @@ public class AddEditTaskFragment extends Fragment implements AddEditTaskContract
 
         setTaskIdIfAny();
 
+        mViewModel = Injection.provideAddEditTaskViewModel(getContext(), mEditedTaskId);
+
         FloatingActionButton fab =
                 (FloatingActionButton) getActivity().findViewById(R.id.fab_edit_task_done);
         fab.setImageResource(R.drawable.ic_done);
@@ -85,23 +125,75 @@ public class AddEditTaskFragment extends Fragment implements AddEditTaskContract
             @Override
             public void onClick(View v) {
                 if (isNewTask()) {
-                    mPresenter.createTask(
-                            mTitle.getText().toString(),
-                            mDescription.getText().toString());
+                    createTask();
                 } else {
-                    mPresenter.updateTask(
-                            mTitle.getText().toString(),
-                            mDescription.getText().toString());
+                    updateTask();
                 }
-
             }
         });
+    }
+
+    private void updateTask() {
+        Preconditions.checkNotNull(mViewModel);
+        Preconditions.checkNotNull(mSubscriptions);
+        Preconditions.checkNotNull(mTitle);
+        Preconditions.checkNotNull(mDescription);
+
+        mSubscriptions.add(
+                mViewModel.updateTask(
+                        mTitle.getText().toString(),
+                        mDescription.getText().toString())
+                        .subscribe(new Subscriber<Void>() {
+                            @Override
+                            public void onCompleted() {
+
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                showEmptyTaskError();
+                            }
+
+                            @Override
+                            public void onNext(Void aVoid) {
+                                // After an edit, go back to the list.
+                                showTasksList();
+                            }
+                        }));
+    }
+
+    private void createTask() {
+        Preconditions.checkNotNull(mViewModel);
+        Preconditions.checkNotNull(mSubscriptions);
+        Preconditions.checkNotNull(mTitle);
+        Preconditions.checkNotNull(mDescription);
+
+        mSubscriptions.add(
+                mViewModel.createTask(
+                        mTitle.getText().toString(),
+                        mDescription.getText().toString())
+                        .subscribe(new Subscriber<Void>() {
+                            @Override
+                            public void onCompleted() {
+
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                showEmptyTaskError();
+                            }
+
+                            @Override
+                            public void onNext(Void aVoid) {
+                                showTasksList();
+                            }
+                        }));
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.addtask_frag, container, false);
         mTitle = (TextView) root.findViewById(R.id.add_task_title);
         mDescription = (TextView) root.findViewById(R.id.add_task_description);
@@ -111,29 +203,28 @@ public class AddEditTaskFragment extends Fragment implements AddEditTaskContract
         return root;
     }
 
-    @Override
-    public void showEmptyTaskError() {
+    private void showEmptyTaskError() {
         Snackbar.make(mTitle, getString(R.string.empty_task_message), Snackbar.LENGTH_LONG).show();
     }
 
-    @Override
-    public void showTasksList() {
+    private void showTasksList() {
         getActivity().setResult(Activity.RESULT_OK);
         getActivity().finish();
     }
 
-    @Override
-    public void setTitle(String title) {
-        mTitle.setText(title);
+    private void setTask(@NonNull Task task) {
+        if (!isActive()) {
+            return;
+        }
+
+        Preconditions.checkNotNull(mTitle);
+        Preconditions.checkNotNull(mDescription);
+
+        mTitle.setText(task.getTitle());
+        mDescription.setText(task.getDescription());
     }
 
-    @Override
-    public void setDescription(String description) {
-        mDescription.setText(description);
-    }
-
-    @Override
-    public boolean isActive() {
+    private boolean isActive() {
         return isAdded();
     }
 
