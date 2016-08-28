@@ -56,7 +56,7 @@ public class AddEditTaskFragment extends Fragment {
     private String mEditedTaskId;
 
     @Nullable
-    private CompositeSubscription mSubscriptions;
+    private CompositeSubscription mSubscription;
 
     @Nullable
     private AddEditTaskViewModel mViewModel;
@@ -82,32 +82,26 @@ public class AddEditTaskFragment extends Fragment {
     }
 
     private void bind() {
-        Preconditions.checkNotNull(mViewModel);
+        mSubscription = new CompositeSubscription();
 
-        mSubscriptions = new CompositeSubscription();
-
-        mSubscriptions.add(mViewModel.getTask()
+        mSubscription.add(getViewModel().getTask()
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new Action1<Task>() {
+                .subscribe(new Action1<Task>() {
                     @Override
                     public void call(Task task) {
                         setTask(task);
                     }
-                })
-                .doOnError(new Action1<Throwable>() {
+                }, new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
                         showEmptyTaskError();
                     }
-                })
-                .subscribe());
+                }));
     }
 
     private void unbind() {
-        Preconditions.checkNotNull(mSubscriptions);
-
-        mSubscriptions.unsubscribe();
+        getSubscription().unsubscribe();
     }
 
     @Override
@@ -134,42 +128,32 @@ public class AddEditTaskFragment extends Fragment {
     }
 
     private void updateTask() {
-        Preconditions.checkNotNull(mViewModel);
-        Preconditions.checkNotNull(mSubscriptions);
+        Preconditions.checkNotNull(mSubscription);
         Preconditions.checkNotNull(mTitle);
         Preconditions.checkNotNull(mDescription);
 
-        mSubscriptions.add(
-                mViewModel.updateTask(
-                        mTitle.getText().toString(),
-                        mDescription.getText().toString())
-                        .subscribe(new Subscriber<Void>() {
-                            @Override
-                            public void onCompleted() {
-
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                showEmptyTaskError();
-                            }
-
-                            @Override
-                            public void onNext(Void aVoid) {
-                                // After an edit, go back to the list.
-                                showTasksList();
-                            }
-                        }));
+        mSubscription.add(getViewModel()
+                .updateTask(mTitle.getText().toString(), mDescription.getText().toString())
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        // After an edit, go back to the list.
+                        showTasksList();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        showEmptyTaskError();
+                    }
+                }));
     }
 
     private void createTask() {
-        Preconditions.checkNotNull(mViewModel);
-        Preconditions.checkNotNull(mSubscriptions);
         Preconditions.checkNotNull(mTitle);
         Preconditions.checkNotNull(mDescription);
 
-        mSubscriptions.add(
-                mViewModel.createTask(
+        getSubscription().add(
+                getViewModel().createTask(
                         mTitle.getText().toString(),
                         mDescription.getText().toString())
                         .subscribe(new Subscriber<Void>() {
@@ -236,5 +220,17 @@ public class AddEditTaskFragment extends Fragment {
 
     private boolean isNewTask() {
         return mEditedTaskId == null;
+    }
+
+    @NonNull
+    private AddEditTaskViewModel getViewModel() {
+        Preconditions.checkNotNull(mViewModel);
+        return mViewModel;
+    }
+
+    @NonNull
+    private CompositeSubscription getSubscription() {
+        Preconditions.checkNotNull(mSubscription);
+        return mSubscription;
     }
 }

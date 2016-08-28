@@ -24,10 +24,13 @@ public class AddEditTaskViewModelTest {
     private final String TITLE = "title";
     private final String DESCRIPTION = "descripton";
     private final Task TASK = new Task(TITLE, DESCRIPTION);
-    TestSubscriber<Void> mTestSubscriber;
-    TestSubscriber<Task> mTaskTestSubscriber;
+
+    private TestSubscriber<Void> mTestSubscriber;
+    private TestSubscriber<Task> mTaskTestSubscriber;
+
     @Mock
     private TasksRepository mTasksRepository;
+
     private AddEditTaskViewModel mViewModel;
 
     @Before
