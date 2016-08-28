@@ -33,7 +33,6 @@ import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.google.common.base.Preconditions;
 
-import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -128,11 +127,10 @@ public class AddEditTaskFragment extends Fragment {
     }
 
     private void updateTask() {
-        Preconditions.checkNotNull(mSubscription);
         Preconditions.checkNotNull(mTitle);
         Preconditions.checkNotNull(mDescription);
 
-        mSubscription.add(getViewModel()
+        getSubscription().add(getViewModel()
                 .updateTask(mTitle.getText().toString(), mDescription.getText().toString())
                 .subscribe(new Action1<Void>() {
                     @Override
@@ -152,26 +150,19 @@ public class AddEditTaskFragment extends Fragment {
         Preconditions.checkNotNull(mTitle);
         Preconditions.checkNotNull(mDescription);
 
-        getSubscription().add(
-                getViewModel().createTask(
-                        mTitle.getText().toString(),
-                        mDescription.getText().toString())
-                        .subscribe(new Subscriber<Void>() {
-                            @Override
-                            public void onCompleted() {
-
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                showEmptyTaskError();
-                            }
-
-                            @Override
-                            public void onNext(Void aVoid) {
-                                showTasksList();
-                            }
-                        }));
+        getSubscription().add(getViewModel()
+                .createTask(mTitle.getText().toString(), mDescription.getText().toString())
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        showTasksList();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        showEmptyTaskError();
+                    }
+                }));
     }
 
     @Nullable
