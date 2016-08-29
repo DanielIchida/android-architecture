@@ -6,7 +6,11 @@ import android.support.annotation.Nullable;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 
+import java.util.concurrent.Callable;
+
+import rx.Completable;
 import rx.Observable;
+import rx.functions.Action0;
 import rx.functions.Func1;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -21,7 +25,7 @@ public class AddEditTaskViewModel {
     private final TasksDataSource mTasksRepository;
 
     @Nullable
-    private String mTaskId;
+    private final String mTaskId;
 
     /**
      * Creates a ViewModel for the add/edit view.
@@ -35,52 +39,39 @@ public class AddEditTaskViewModel {
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
+    @NonNull
+    private void saveTask(@NonNull Task newTask) throws Exception {
+        if (newTask.isEmpty()) {
+            throw new Exception("Trying to save an empty task");
+        }
+        mTasksRepository.saveTask(newTask);
+    }
+
     /**
-     * Creates and saves a new task with a title and description.
+     * Creates or updates a task.
      *
-     * @param title       the title of the new task
-     * @param description the description of the new task.
+     * @param title       the title of the task
+     * @param description the description of the task
      * @return a stream that emits only once, after the task was created. The stream will emit an
      * error if the task is empty.
      */
     @NonNull
-    public Observable<Void> createTask(@Nullable String title,
-                                       @Nullable String description) {
-        return saveTask(new Task(title, description));
-    }
-
-    /**
-     * Updates the title and the description of the the task with the current task id in the
-     * repository.
-     *
-     * @param title       the new title of the task
-     * @param description the new description of the task
-     * @return a stream that emits only once, after the task was updated. The stream will emit an
-     * error if there is no task id or if the task is empty.
-     */
-    @NonNull
-    public Observable<Void> updateTask(@Nullable String title,
-                                       @Nullable String description) {
+    public Completable saveTask(@Nullable String title,
+                                @Nullable String description) {
+        final Task newTask;
         if (mTaskId == null) {
-            return Observable.error(new Exception("updateTask() was called but task is new."));
-        }
-        return saveTask(new Task(title, description, mTaskId));
-    }
-
-    @NonNull
-    private Observable<Void> saveTask(@NonNull Task newTask) {
-        if (newTask.isEmpty()) {
-            return Observable.error(new Exception("Trying to save an empty task"));
+            newTask = new Task(title, description);
+        } else {
+            newTask = new Task(title, description, mTaskId);
         }
 
-        return Observable.just(newTask)
-                .map(new Func1<Task, Void>() {
-                    @Override
-                    public Void call(Task task) {
-                        mTasksRepository.saveTask(task);
-                        return null;
-                    }
-                });
+        return Completable.fromCallable(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                saveTask(newTask);
+                return null;
+            }
+        });
     }
 
     /**

@@ -70,108 +70,48 @@ public class AddEditTaskViewModelTest {
     }
 
     @Test
-    public void createTask_savesTask_whenTaskNotEmpty() {
+    public void saveTask_savesTask_whenTaskNotEmpty() {
         // Given no task id set
         mViewModel = new AddEditTaskViewModel(null, mTasksRepository);
 
-        // When creating a task with non empty title and description
-        mViewModel.createTask(TITLE, DESCRIPTION).subscribe();
+        // When saving a task with non empty title and description
+        mViewModel.saveTask(TITLE, DESCRIPTION).subscribe();
 
         // A task is saved in the repository
         verify(mTasksRepository).saveTask(any(Task.class));
     }
 
     @Test
-    public void createTask_emits_whenTaskNotEmpty() {
+    public void saveTask_completes_whenTaskNotEmpty() {
         // Given no task id set
         mViewModel = new AddEditTaskViewModel(null, mTasksRepository);
 
-        // When creating a task with non empty title and description
-        mViewModel.createTask(TITLE, DESCRIPTION).subscribe(mTestSubscriber);
+        // When saving a task with non empty title and description
+        mViewModel.saveTask(TITLE, DESCRIPTION).subscribe(mTestSubscriber);
 
         // A value is emitted
-        mTestSubscriber.assertValueCount(1);
+        mTestSubscriber.assertCompleted();
     }
 
     @Test
-    public void createTask_doesNotSaveTask_whenTaskEmpty() {
+    public void saveTask_doesNotSaveTask_whenTaskEmpty() {
         // Given no task id set
         mViewModel = new AddEditTaskViewModel(null, mTasksRepository);
 
-        // When creating a task with empty title and description
-        mViewModel.createTask(null, null).subscribe(mTestSubscriber);
+        // When saving a task with empty title and description
+        mViewModel.saveTask(null, null).subscribe(mTaskTestSubscriber);
 
         // No task is saved in the repository
         verify(mTasksRepository, never()).saveTask(any(Task.class));
     }
 
     @Test
-    public void createTask_emitsError_whenTaskEmpty() {
+    public void saveTask_emitsError_whenTaskEmpty() {
         // Given no task id set
         mViewModel = new AddEditTaskViewModel(null, mTasksRepository);
 
-        // When creating a task with empty title and description
-        mViewModel.createTask(null, null).subscribe(mTestSubscriber);
-
-        // An error is emitted
-        mTestSubscriber.assertError(Exception.class);
-    }
-
-    @Test
-    public void updateTask_emitsError_whenTaskIdEmpty() {
-        // Given no task id set
-        mViewModel = new AddEditTaskViewModel(null, mTasksRepository);
-
-        // When updating a task with title and description
-        mViewModel.updateTask(TITLE, DESCRIPTION).subscribe(mTestSubscriber);
-
-        // An error is emitted
-        mTestSubscriber.assertError(Exception.class);
-    }
-
-    @Test
-    public void updateTask_savesTask_whenTaskNotEmpty() {
-        // Given a view model with taskId set
-        mViewModel = new AddEditTaskViewModel(TASK.getId(), mTasksRepository);
-
-        // When updating a task with non empty title and description
-        mViewModel.updateTask(TITLE, DESCRIPTION).subscribe();
-
-        // A task is saved in the repository
-        verify(mTasksRepository).saveTask(any(Task.class));
-    }
-
-    @Test
-    public void updateTask_emits_whenTaskNotEmpty() {
-        // Given a view model with taskId set
-        mViewModel = new AddEditTaskViewModel(TASK.getId(), mTasksRepository);
-
-        // When updating a task with non empty title and description
-        mViewModel.updateTask(TITLE, DESCRIPTION).subscribe(mTestSubscriber);
-
-        // A value is emitted
-        mTestSubscriber.assertValueCount(1);
-    }
-
-    @Test
-    public void updateTask_doesNotSaveTask_whenTaskEmpty() {
-        // Given a view model with taskId set
-        mViewModel = new AddEditTaskViewModel(TASK.getId(), mTasksRepository);
-
-        // When updating a task with empty title and description
-        mViewModel.updateTask(null, null).subscribe(mTestSubscriber);
-
-        // No task is saved in the repository
-        verify(mTasksRepository, never()).saveTask(any(Task.class));
-    }
-
-    @Test
-    public void updateTask_emitsError_whenTaskEmpty() {
-        // Given a view model with taskId set
-        mViewModel = new AddEditTaskViewModel(TASK.getId(), mTasksRepository);
-
-        // When updating a task with empty title and description
-        mViewModel.updateTask(null, null).subscribe(mTestSubscriber);
+        // When saving a task with empty title and description
+        mViewModel.saveTask(null, null).subscribe(mTestSubscriber);
 
         // An error is emitted
         mTestSubscriber.assertError(Exception.class);

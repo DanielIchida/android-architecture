@@ -34,6 +34,7 @@ import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.google.common.base.Preconditions;
 
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
@@ -52,9 +53,6 @@ public class AddEditTaskFragment extends Fragment {
     private TextView mDescription;
 
     @Nullable
-    private String mEditedTaskId;
-
-    @Nullable
     private CompositeSubscription mSubscription;
 
     @Nullable
@@ -62,10 +60,6 @@ public class AddEditTaskFragment extends Fragment {
 
     public static AddEditTaskFragment newInstance() {
         return new AddEditTaskFragment();
-    }
-
-    public AddEditTaskFragment() {
-        // Required empty public constructor
     }
 
     @Override
@@ -76,8 +70,8 @@ public class AddEditTaskFragment extends Fragment {
 
     @Override
     public void onPause() {
-        super.onPause();
         unbind();
+        super.onPause();
     }
 
     private void bind() {
@@ -107,9 +101,7 @@ public class AddEditTaskFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        setTaskIdIfAny();
-
-        mViewModel = Injection.provideAddEditTaskViewModel(getContext(), mEditedTaskId);
+        mViewModel = Injection.provideAddEditTaskViewModel(getContext(), getTaskId());
 
         FloatingActionButton fab =
                 (FloatingActionButton) getActivity().findViewById(R.id.fab_edit_task_done);
@@ -117,44 +109,22 @@ public class AddEditTaskFragment extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isNewTask()) {
-                    createTask();
-                } else {
-                    updateTask();
-                }
+                saveTask();
             }
         });
     }
 
-    private void updateTask() {
+    private void saveTask() {
         Preconditions.checkNotNull(mTitle);
         Preconditions.checkNotNull(mDescription);
 
         getSubscription().add(getViewModel()
-                .updateTask(mTitle.getText().toString(), mDescription.getText().toString())
-                .subscribe(new Action1<Void>() {
+                .saveTask(mTitle.getText().toString(), mDescription.getText().toString())
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action0() {
                     @Override
-                    public void call(Void aVoid) {
-                        // After an edit, go back to the list.
-                        showTasksList();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        showEmptyTaskError();
-                    }
-                }));
-    }
-
-    private void createTask() {
-        Preconditions.checkNotNull(mTitle);
-        Preconditions.checkNotNull(mDescription);
-
-        getSubscription().add(getViewModel()
-                .createTask(mTitle.getText().toString(), mDescription.getText().toString())
-                .subscribe(new Action1<Void>() {
-                    @Override
-                    public void call(Void aVoid) {
+                    public void call() {
                         showTasksList();
                     }
                 }, new Action1<Throwable>() {
@@ -179,6 +149,7 @@ public class AddEditTaskFragment extends Fragment {
     }
 
     private void showEmptyTaskError() {
+        Preconditions.checkNotNull(mTitle);
         Snackbar.make(mTitle, getString(R.string.empty_task_message), Snackbar.LENGTH_LONG).show();
     }
 
@@ -203,25 +174,21 @@ public class AddEditTaskFragment extends Fragment {
         return isAdded();
     }
 
-    private void setTaskIdIfAny() {
-        if (getArguments() != null && getArguments().containsKey(ARGUMENT_EDIT_TASK_ID)) {
-            mEditedTaskId = getArguments().getString(ARGUMENT_EDIT_TASK_ID);
+    @Nullable
+    private String getTaskId() {
+        if (getArguments() != null) {
+            return getArguments().getString(ARGUMENT_EDIT_TASK_ID);
         }
-    }
-
-    private boolean isNewTask() {
-        return mEditedTaskId == null;
+        return null;
     }
 
     @NonNull
     private AddEditTaskViewModel getViewModel() {
-        Preconditions.checkNotNull(mViewModel);
-        return mViewModel;
+        return Preconditions.checkNotNull(mViewModel);
     }
 
     @NonNull
     private CompositeSubscription getSubscription() {
-        Preconditions.checkNotNull(mSubscription);
-        return mSubscription;
+        return Preconditions.checkNotNull(mSubscription);
     }
 }
