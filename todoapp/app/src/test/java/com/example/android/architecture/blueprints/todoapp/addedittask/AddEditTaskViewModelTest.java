@@ -21,9 +21,9 @@ import static org.mockito.Mockito.when;
  */
 public class AddEditTaskViewModelTest {
 
-    private final String TITLE = "title";
-    private final String DESCRIPTION = "descripton";
-    private final Task TASK = new Task(TITLE, DESCRIPTION);
+    private static final String TITLE = "title";
+    private static final String DESCRIPTION = "descripton";
+    private static final Task TASK = new Task(TITLE, DESCRIPTION);
 
     private TestSubscriber<Void> mTestSubscriber;
     private TestSubscriber<Task> mTaskTestSubscriber;
@@ -114,6 +114,6 @@ public class AddEditTaskViewModelTest {
         mViewModel.saveTask(null, null).subscribe(mTestSubscriber);
 
         // An error is emitted
-        mTestSubscriber.assertError(Exception.class);
+        mTestSubscriber.assertError(RuntimeException.class);
     }
 }
