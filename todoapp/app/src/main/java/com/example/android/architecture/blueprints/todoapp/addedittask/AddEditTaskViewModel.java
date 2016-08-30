@@ -6,8 +6,6 @@ import android.support.annotation.Nullable;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 
-import java.util.concurrent.Callable;
-
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action0;
@@ -39,14 +37,6 @@ public class AddEditTaskViewModel {
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
-    @NonNull
-    private void saveTask(@NonNull Task newTask) throws Exception {
-        if (newTask.isEmpty()) {
-            throw new Exception("Trying to save an empty task");
-        }
-        mTasksRepository.saveTask(newTask);
-    }
-
     /**
      * Creates or updates a task.
      *
@@ -56,22 +46,24 @@ public class AddEditTaskViewModel {
      * error if the task is empty.
      */
     @NonNull
-    public Completable saveTask(@Nullable String title,
-                                @Nullable String description) {
-        final Task newTask;
-        if (mTaskId == null) {
-            newTask = new Task(title, description);
-        } else {
-            newTask = new Task(title, description, mTaskId);
-        }
-
-        return Completable.fromCallable(new Callable<Void>() {
+    public Completable saveTask(@Nullable final String title,
+                                @Nullable final String description) {
+        return Completable.fromAction(new Action0() {
             @Override
-            public Void call() throws Exception {
+            public void call() {
+                Task newTask = mTaskId == null ?
+                        new Task(title, description) :
+                        new Task(title, description, mTaskId);
                 saveTask(newTask);
-                return null;
             }
         });
+    }
+
+    private void saveTask(@NonNull Task newTask) {
+        if (newTask.isEmpty()) {
+            throw new RuntimeException("Trying to save an empty task");
+        }
+        mTasksRepository.saveTask(newTask);
     }
 
     /**

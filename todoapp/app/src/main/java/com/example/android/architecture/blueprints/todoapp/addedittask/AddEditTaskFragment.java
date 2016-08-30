@@ -33,8 +33,9 @@ import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.google.common.base.Preconditions;
 
+import rx.Completable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
@@ -118,21 +119,26 @@ public class AddEditTaskFragment extends Fragment {
         Preconditions.checkNotNull(mTitle);
         Preconditions.checkNotNull(mDescription);
 
-        getSubscription().add(getViewModel()
+        getViewModel()
                 .saveTask(mTitle.getText().toString(), mDescription.getText().toString())
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action0() {
+                .subscribe(new Completable.CompletableSubscriber() {
                     @Override
-                    public void call() {
+                    public void onCompleted() {
                         showTasksList();
                     }
-                }, new Action1<Throwable>() {
+
                     @Override
-                    public void call(Throwable throwable) {
+                    public void onError(Throwable e) {
                         showEmptyTaskError();
                     }
-                }));
+
+                    @Override
+                    public void onSubscribe(Subscription d) {
+                        //nothing to do here
+                    }
+                });
     }
 
     @Nullable
