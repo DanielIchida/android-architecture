@@ -66,16 +66,16 @@ public class AddEditTaskFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        bind();
+        bindViewModel();
     }
 
     @Override
     public void onPause() {
-        unbind();
+        unbindViewModel();
         super.onPause();
     }
 
-    private void bind() {
+    private void bindViewModel() {
         mSubscription = new CompositeSubscription();
 
         mSubscription.add(getViewModel().getTask()
@@ -94,7 +94,7 @@ public class AddEditTaskFragment extends Fragment {
                 }));
     }
 
-    private void unbind() {
+    private void unbindViewModel() {
         getSubscription().unsubscribe();
     }
 
@@ -102,7 +102,7 @@ public class AddEditTaskFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mViewModel = Injection.provideAddEditTaskViewModel(getContext(), getTaskId());
+        mViewModel = Injection.provideAddEditTaskViewModel(getTaskId(), getContext());
 
         FloatingActionButton fab =
                 (FloatingActionButton) getActivity().findViewById(R.id.fab_edit_task_done);

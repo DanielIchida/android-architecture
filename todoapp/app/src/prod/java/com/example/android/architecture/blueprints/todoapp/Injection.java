@@ -18,7 +18,9 @@ package com.example.android.architecture.blueprints.todoapp;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
+import com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskViewModel;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksLocalDataSource;
@@ -47,5 +49,11 @@ public class Injection {
 
     public static StatisticsViewModel provideStatisticsViewModel(@NonNull Context context) {
         return new StatisticsViewModel(provideTasksRepository(context));
+    }
+
+    @NonNull
+    public static AddEditTaskViewModel provideAddEditTaskViewModel(@Nullable String taskId,
+                                                                   @NonNull Context context) {
+        return new AddEditTaskViewModel(taskId, provideTasksRepository(context));
     }
 }
