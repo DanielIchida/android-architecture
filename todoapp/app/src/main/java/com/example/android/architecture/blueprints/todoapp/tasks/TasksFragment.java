@@ -50,9 +50,11 @@ import java.util.List;
 
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
+
+import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ACTIVE_TASKS;
+import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.COMPLETED_TASKS;
 
 /**
  * Display a list of {@link Task}s. User can choose to view all, active or completed tasks.
@@ -86,10 +88,6 @@ public class TasksFragment extends Fragment {
     @Nullable
     private CompositeSubscription mSubscription;
 
-    public TasksFragment() {
-        // Requires empty public constructor
-    }
-
     public static TasksFragment newInstance() {
         return new TasksFragment();
     }
@@ -103,16 +101,16 @@ public class TasksFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        bind();
+        bindViewModel();
     }
 
     @Override
     public void onPause() {
+        unbindViewModel();
         super.onPause();
-        unbind();
     }
 
-    private void bind() {
+    private void bindViewModel() {
         mSubscription = new CompositeSubscription();
 
         mSubscription.add(getViewModel().getFiltering()
@@ -154,9 +152,11 @@ public class TasksFragment extends Fragment {
                         showTasks(tasks);
                     }
                 }));
+
+        mSubscription.add(getViewModel().);
     }
 
-    private void unbind() {
+    private void unbindViewModel() {
         getSubscription().unsubscribe();
     }
 
@@ -259,10 +259,10 @@ public class TasksFragment extends Fragment {
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.active:
-                        mViewModel.setFiltering(TasksFilterType.ACTIVE_TASKS);
+                        mViewModel.setFiltering(ACTIVE_TASKS);
                         break;
                     case R.id.completed:
-                        mViewModel.setFiltering(TasksFilterType.COMPLETED_TASKS);
+                        mViewModel.setFiltering(COMPLETED_TASKS);
                         break;
                     default:
                         mViewModel.setFiltering(TasksFilterType.ALL_TASKS);
@@ -319,16 +319,16 @@ public class TasksFragment extends Fragment {
         mNoTasksView.setVisibility(View.GONE);
     }
 
-    private void processEmptyTasks() {
-        switch (mCurrentFiltering) {
+    private void processEmptyTasks(@NonNull TasksFilterType filterType) {
+        switch (filterType) {
             case ACTIVE_TASKS:
-                mTasksView.showNoActiveTasks();
+                showNoActiveTasks();
                 break;
             case COMPLETED_TASKS:
-                mTasksView.showNoCompletedTasks();
+                showNoCompletedTasks();
                 break;
             default:
-                mTasksView.showNoTasks();
+                showNoTasks();
                 break;
         }
     }
@@ -432,14 +432,12 @@ public class TasksFragment extends Fragment {
 
     @NonNull
     private TasksViewModel getViewModel() {
-        Preconditions.checkNotNull(mViewModel);
-        return mViewModel;
+        return Preconditions.checkNotNull(mViewModel);
     }
 
     @NonNull
     private CompositeSubscription getSubscription() {
-        Preconditions.checkNotNull(mSubscription);
-        return mSubscription;
+        return Preconditions.checkNotNull(mSubscription);
     }
 
     interface TaskItemListener {

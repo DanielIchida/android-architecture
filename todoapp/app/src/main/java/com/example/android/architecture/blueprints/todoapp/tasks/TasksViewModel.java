@@ -19,15 +19,17 @@ package com.example.android.architecture.blueprints.todoapp.tasks;
 import android.support.annotation.NonNull;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
 
 import java.util.List;
 
+import rx.Completable;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
+import rx.functions.Action0;
+import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;
 
@@ -49,7 +51,10 @@ public class TasksViewModel {
     private final BehaviorSubject<TasksFilterType> mFilteringSubject;
 
     @NonNull
-    private final BehaviorSubject<Boolean> mLoadingSubject;
+    private final BehaviorSubject<Boolean> mLoadTasksSubject;
+
+    @NonNull
+    private final BehaviorSubject<Boolean> mShowLoadingSubject;
 
     private boolean mFirstLoad = true;
 
@@ -57,7 +62,8 @@ public class TasksViewModel {
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null");
 
         mFilteringSubject = BehaviorSubject.create(TasksFilterType.ALL_TASKS);
-        mLoadingSubject = BehaviorSubject.create(false);
+        mLoadTasksSubject = BehaviorSubject.create(true);
+        mShowLoadingSubject = BehaviorSubject.create(false);
     }
 
     @Override
@@ -65,15 +71,12 @@ public class TasksViewModel {
         loadTasks(false);
     }
 
-    @Override
     public void loadTasks(boolean forceUpdate) {
-        // Simplification for sample: a network reload will be forced on first load.
-        loadTasks(forceUpdate || mFirstLoad, true);
-        mFirstLoad = false;
+        mLoadTasksSubject.onNext(forceUpdate);
     }
 
     @NonNull
-    public Observable<List<Task>> getTasks() {
+    public Observable<List<Task>> getTasksFromRepository() {
         return mTasksRepository.getTasks()
                 .flatMap(new Func1<List<Task>, Observable<List<Task>>>() {
                     @Override
@@ -96,21 +99,40 @@ public class TasksViewModel {
                 });
     }
 
-    /**
-     * @param forceUpdate   Pass in true to refresh the data in the {@link TasksDataSource}
-     * @param showLoadingUI Pass in true to display a loading icon in the UI
-     */
-    private void loadTasks(final boolean forceUpdate, final boolean showLoadingUI) {
-        if (showLoadingUI) {
-            mTasksView.setLoadingIndicator(true);
-        }
-        if (forceUpdate) {
-            mTasksRepository.refreshTasks();
-        }
+    @NonNull
+    public Observable<Boolean> getLoadingIndicator() {
+        return mShowLoadingSubject.distinctUntilChanged();
+    }
 
+    @NonNull
+    public Observable<List<Task>> getTasks() {
         // The network request might be handled in a different thread so make sure Espresso knows
         // that the app is busy until the response is handled.
         EspressoIdlingResource.increment(); // App is busy until further notice
+
+        return mLoadTasksSubject
+                .doOnNext(new Action1<Boolean>() {
+                    @Override
+                    public void call(Boolean forceUpdate) {
+                        if (forceUpdate) {
+                            mTasksRepository.refreshTasks();
+                            mLoadTasksSubject.onNext(true);
+                        }
+                    }
+                })
+                .doOnTerminate(new Action0() {
+                    @Override
+                    public void call() {
+                        mLoadTasksSubject.onNext(false);
+                    }
+                })
+                .flatMap(new Func1<Boolean, Observable<List<Task>>>() {
+                    @Override
+                    public Observable<List<Task>> call(Boolean aBoolean) {
+                        return getTasksFromRepository();
+                    }
+                });
+
 
         Subscription subscription = mTasksRepository
                 .getTasks()
@@ -179,24 +201,39 @@ public class TasksViewModel {
         }
     }
 
-    public void completeTask(@NonNull Task completedTask) {
+    @NonNull
+    public Completable completeTask(@NonNull final Task completedTask) {
         checkNotNull(completedTask, "completedTask cannot be null!");
-        mTasksRepository.completeTask(completedTask);
-        mTasksView.showTaskMarkedComplete();
-        loadTasks(false, false);
+        return Completable.fromAction(new Action0() {
+            @Override
+            public void call() {
+                mTasksRepository.completeTask(completedTask);
+                mLoadTasksSubject.onNext(false);
+            }
+        });
     }
 
-    public void activateTask(@NonNull Task activeTask) {
+    @NonNull
+    public Completable activateTask(@NonNull final Task activeTask) {
         checkNotNull(activeTask, "activeTask cannot be null!");
-        mTasksRepository.activateTask(activeTask);
-        mTasksView.showTaskMarkedActive();
-        loadTasks(false, false);
+        return Completable.fromAction(new Action0() {
+            @Override
+            public void call() {
+                mTasksRepository.activateTask(activeTask);
+                mLoadTasksSubject.onNext(false);
+            }
+        });
     }
 
-    public void clearCompletedTasks() {
-        mTasksRepository.clearCompletedTasks();
-        mTasksView.showCompletedTasksCleared();
-        loadTasks(false, false);
+    @NonNull
+    public Completable clearCompletedTasks() {
+        return Completable.fromAction(new Action0() {
+            @Override
+            public void call() {
+                mTasksRepository.clearCompletedTasks();
+                mLoadTasksSubject.onNext(false);
+            }
+        });
     }
 
     /**
@@ -208,6 +245,10 @@ public class TasksViewModel {
      */
     public void setFiltering(@NonNull TasksFilterType requestType) {
         mFilteringSubject.onNext(requestType);
+    }
+
+    @NonNull
+    public Observable<String> getFilteringLabel(){
     }
 
     @NonNull

@@ -71,12 +71,6 @@ public class TasksActivity extends AppCompatActivity {
                     getSupportFragmentManager(), tasksFragment, R.id.contentFrame);
         }
 
-        // Create the presenter
-        mTasksPresenter = new TasksPresenter(
-                Injection.provideTasksRepository(getApplicationContext()),
-                tasksFragment,
-                Injection.provideSchedulerProvider());
-
         // Load previously saved state, if available.
         if (savedInstanceState != null) {
             TasksFilterType currentFiltering =
