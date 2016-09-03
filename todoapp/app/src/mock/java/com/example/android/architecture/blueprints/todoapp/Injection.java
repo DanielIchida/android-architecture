@@ -64,8 +64,8 @@ public class Injection {
     }
 
     @NonNull
-    public static AddEditTaskViewModel provideAddEditTaskViewModel(@NonNull Context context,
-                                                                   @Nullable String taskId) {
+    public static AddEditTaskViewModel provideAddEditTaskViewModel(@Nullable String taskId,
+                                                                   @NonNull Context context) {
         return new AddEditTaskViewModel(taskId, provideTasksRepository(context));
     }
 }
