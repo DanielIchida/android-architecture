@@ -35,7 +35,14 @@ public interface TasksDataSource {
 
     Observable<Task> getTask(@NonNull String taskId);
 
-    void saveTask(@NonNull Task task);
+    /**
+     * Saves a task in the local and then in the remote repository
+     *
+     * @param task the task to be saved
+     * @return a completable that emits when the task was saved or in case of error.
+     */
+    @NonNull
+    Completable saveTask(@NonNull Task task);
 
     Completable saveTasks(@NonNull List<Task> tasks);
 

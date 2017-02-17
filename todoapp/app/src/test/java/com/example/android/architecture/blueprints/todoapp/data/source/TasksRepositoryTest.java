@@ -19,6 +19,7 @@ package com.example.android.architecture.blueprints.todoapp.data.source;
 import android.content.Context;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.ImmediateSchedulerProvider;
 import com.google.common.collect.Lists;
 
 import org.junit.After;
@@ -31,13 +32,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import rx.Completable;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -81,7 +79,7 @@ public class TasksRepositoryTest {
 
         // Get a reference to the class under test
         mTasksRepository = TasksRepository.getInstance(
-                mTasksRemoteDataSource, mTasksLocalDataSource);
+                mTasksRemoteDataSource, mTasksLocalDataSource, new ImmediateSchedulerProvider());
 
         mTasksTestSubscriber = new TestSubscriber<>();
     }
@@ -154,9 +152,11 @@ public class TasksRepositoryTest {
     public void saveTask_savesTaskToServiceAPI() {
         // Given a stub task with title and description
         Task newTask = new Task(TASK_TITLE, "Some Task Description");
+        when(mTasksLocalDataSource.saveTask(newTask)).thenReturn(Completable.complete());
+        when(mTasksRemoteDataSource.saveTask(newTask)).thenReturn(Completable.complete());
 
         // When a task is saved to the tasks repository
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
 
         // Then the service API and persistent repository are called and the cache is updated
         verify(mTasksRemoteDataSource).saveTask(newTask);
@@ -270,7 +270,6 @@ public class TasksRepositoryTest {
         // Then the service API and persistent repository are called and the cache is updated
         verify(mTasksRemoteDataSource).clearCompletedTasks();
         verify(mTasksLocalDataSource).clearCompletedTasks();
-
     }
 
     @Test
@@ -289,7 +288,6 @@ public class TasksRepositoryTest {
         // Verify the data sources were called
         verify(mTasksRemoteDataSource).deleteAllTasks();
         verify(mTasksLocalDataSource).deleteAllTasks();
-
     }
 
     @Test

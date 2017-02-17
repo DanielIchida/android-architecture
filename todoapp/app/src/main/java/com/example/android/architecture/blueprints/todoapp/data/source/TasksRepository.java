@@ -18,18 +18,15 @@ package com.example.android.architecture.blueprints.todoapp.data.source;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
 import java.util.List;
-import java.util.Map;
 
 import rx.Completable;
 import rx.Observable;
-import rx.schedulers.Schedulers;
+import rx.Single;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -50,17 +47,19 @@ public class TasksRepository implements TasksDataSource {
 
     @NonNull
     private final TasksDataSource mTasksLocalDataSource;
+
+    @NonNull
     private final BaseSchedulerProvider mBaseSchedulerProvider;
 
     // Prevent direct instantiation.
     private TasksRepository(@NonNull TasksDataSource tasksRemoteDataSource,
-                            @NonNull TasksDataSource tasksLocalDataSource) {
+                            @NonNull TasksDataSource tasksLocalDataSource,
+                            @NonNull BaseSchedulerProvider schedulerProvider) {
         mTasksRemoteDataSource = checkNotNull(tasksRemoteDataSource);
         mTasksLocalDataSource = checkNotNull(tasksLocalDataSource);
+        mBaseSchedulerProvider = checkNotNull(schedulerProvider);
         // Load remote tasks and store in local repository
-        refreshTasks();
-
-        mBaseSchedulerProvider = Injection.provideSchedulerProvider();
+//        refreshTasks();
     }
 
     /**
@@ -71,35 +70,45 @@ public class TasksRepository implements TasksDataSource {
      * @return the {@link TasksRepository} instance
      */
     public static TasksRepository getInstance(@NonNull TasksDataSource tasksRemoteDataSource,
-                                              @NonNull TasksDataSource tasksLocalDataSource) {
+                                              @NonNull TasksDataSource tasksLocalDataSource,
+                                              @NonNull BaseSchedulerProvider schedulerProvider) {
         if (INSTANCE == null) {
-            INSTANCE = new TasksRepository(tasksRemoteDataSource, tasksLocalDataSource);
+            INSTANCE = new TasksRepository(tasksRemoteDataSource, tasksLocalDataSource,
+                    schedulerProvider);
         }
         return INSTANCE;
     }
 
     /**
-     * Used to force {@link #getInstance(TasksDataSource, TasksDataSource)} to create a new instance
-     * next time it's called.
+     * Used to force {@link #getInstance(TasksDataSource, TasksDataSource, BaseSchedulerProvider)}
+     * to create a new instance next time it's called.
      */
     public static void destroyInstance() {
         INSTANCE = null;
     }
 
     /**
-     * Gets tasks from cache, local data source (SQLite) or remote data source, whichever is
-     * available first.
+     * Gets tasks from  local data source (SQLite).
      */
     @Override
     public Observable<List<Task>> getTasks() {
         return mTasksLocalDataSource.getTasks();
     }
 
+    /**
+     * Saves a task in the local and then in the remote repository
+     *
+     * @param task the task to be saved
+     * @return a completable that emits when the task was saved or in case of error.
+     */
+    @NonNull
     @Override
-    public void saveTask(@NonNull Task task) {
+    public Completable saveTask(@NonNull Task task) {
         checkNotNull(task);
-        mTasksRemoteDataSource.saveTask(task);
-        mTasksLocalDataSource.saveTask(task);
+        return Single.just(task)
+                .observeOn(mBaseSchedulerProvider.io())
+                .flatMapCompletable(mTasksLocalDataSource::saveTask)
+                .concatWith(mTasksRemoteDataSource.saveTask(task));
     }
 
     @Override
