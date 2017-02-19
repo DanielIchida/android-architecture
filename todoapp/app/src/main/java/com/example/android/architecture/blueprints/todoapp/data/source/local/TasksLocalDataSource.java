@@ -127,6 +127,15 @@ public class TasksLocalDataSource implements TasksDataSource {
             ContentValues values = toContentValues(task);
             mDatabaseHelper.insert(TaskEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
         });
+//        return Completable.fromCallable(new Callable<Void>() {
+//            @Override
+//            public Void call() throws Exception {
+//                Log.d("flo", "flo is main thread? " + getMainLooper().getThread().equals(currentThread()));
+//                ContentValues values = toContentValues(task);
+//                mDatabaseHelper.insert(TaskEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
+//                return null;
+//            }
+//        });
     }
 
     @Override

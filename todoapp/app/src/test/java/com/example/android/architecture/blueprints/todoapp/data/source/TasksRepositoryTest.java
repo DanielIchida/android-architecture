@@ -181,7 +181,7 @@ public class TasksRepositoryTest {
     public void completeTaskId_completesTaskToServiceAPIUpdatesCache() {
         // Given a stub active task with title and description added in the repository
         Task newTask = new Task(TASK_TITLE, "Some Task Description");
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
 
         // When a task is completed using its id to the tasks repository
         mTasksRepository.completeTask(newTask.getId());
@@ -195,7 +195,7 @@ public class TasksRepositoryTest {
     public void activateTask_activatesTaskToServiceAPIUpdatesCache() {
         // Given a stub completed task with title and description in the repository
         Task newTask = new Task(TASK_TITLE, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
 
         // When a completed task is activated to the tasks repository
         mTasksRepository.activateTask(newTask);
@@ -209,7 +209,7 @@ public class TasksRepositoryTest {
     public void activateTaskId_activatesTaskToServiceAPIUpdatesCache() {
         // Given a stub completed task with title and description in the repository
         Task newTask = new Task(TASK_TITLE, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
 
         // When a completed task is activated with its id to the tasks repository
         mTasksRepository.activateTask(newTask.getId());
@@ -258,11 +258,11 @@ public class TasksRepositoryTest {
     public void deleteCompletedTasks_deleteCompletedTasksToServiceAPIUpdatesCache() {
         // Given 2 stub completed tasks and 1 stub active tasks in the repository
         Task newTask = new Task(TASK_TITLE, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
         Task newTask2 = new Task(TASK_TITLE2, "Some Task Description");
-        mTasksRepository.saveTask(newTask2);
+        mTasksRepository.saveTask(newTask2).subscribe();
         Task newTask3 = new Task(TASK_TITLE3, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask3);
+        mTasksRepository.saveTask(newTask3).subscribe();
 
         // When a completed tasks are cleared to the tasks repository
         mTasksRepository.clearCompletedTasks();
@@ -276,11 +276,11 @@ public class TasksRepositoryTest {
     public void deleteAllTasks_deleteTasksToServiceAPIUpdatesCache() {
         // Given 2 stub completed tasks and 1 stub active tasks in the repository
         Task newTask = new Task(TASK_TITLE, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
         Task newTask2 = new Task(TASK_TITLE2, "Some Task Description");
-        mTasksRepository.saveTask(newTask2);
+        mTasksRepository.saveTask(newTask2).subscribe();
         Task newTask3 = new Task(TASK_TITLE3, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask3);
+        mTasksRepository.saveTask(newTask3).subscribe();
 
         // When all tasks are deleted to the tasks repository
         mTasksRepository.deleteAllTasks();
@@ -294,7 +294,7 @@ public class TasksRepositoryTest {
     public void deleteTask_deleteTaskToServiceAPIRemovedFromCache() {
         // Given a task in the repository
         Task newTask = new Task(TASK_TITLE, "Some Task Description", true);
-        mTasksRepository.saveTask(newTask);
+        mTasksRepository.saveTask(newTask).subscribe();
 
         // When deleted
         mTasksRepository.deleteTask(newTask.getId());
@@ -372,7 +372,7 @@ public class TasksRepositoryTest {
     @Test
     public void getTasks_refreshesLocalDataSource() {
         // Given that the remote data source has data available
-        setTasksAvailable(mTasksRemoteDataSource, TASKS);
+        setTasksAvailable(mTasksLocalDataSource, TASKS);
 
         // Mark cache as dirty to force a reload of data from remote data source.
         mTasksRepository.refreshTasks();

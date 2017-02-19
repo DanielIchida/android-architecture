@@ -26,7 +26,6 @@ import java.util.List;
 
 import rx.Completable;
 import rx.Observable;
-import rx.Single;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -105,10 +104,8 @@ public class TasksRepository implements TasksDataSource {
     @Override
     public Completable saveTask(@NonNull Task task) {
         checkNotNull(task);
-        return Single.just(task)
-                .observeOn(mBaseSchedulerProvider.io())
-                .flatMapCompletable(mTasksLocalDataSource::saveTask)
-                .concatWith(mTasksRemoteDataSource.saveTask(task));
+        return mTasksLocalDataSource.saveTask(task)
+                .andThen(mTasksRemoteDataSource.saveTask(task));
     }
 
     @Override
