@@ -116,11 +116,7 @@ public class AddEditTaskViewModel {
         } else {
             newTask = new Task(title, description, mTaskId);
         }
-        return updateTask(newTask);
-    }
-
-    private Completable updateTask(Task task) {
-        return mTasksRepository.saveTask(task);
+        return mTasksRepository.saveTask(newTask);
     }
 
     private void showSnackbar(@StringRes int textId) {
