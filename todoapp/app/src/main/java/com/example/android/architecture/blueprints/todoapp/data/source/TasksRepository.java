@@ -57,8 +57,6 @@ public class TasksRepository implements TasksDataSource {
         mTasksRemoteDataSource = checkNotNull(tasksRemoteDataSource);
         mTasksLocalDataSource = checkNotNull(tasksLocalDataSource);
         mBaseSchedulerProvider = checkNotNull(schedulerProvider);
-        // Load remote tasks and store in local repository
-//        refreshTasks();
     }
 
     /**
@@ -108,12 +106,17 @@ public class TasksRepository implements TasksDataSource {
                 .andThen(mTasksRemoteDataSource.saveTask(task));
     }
 
+    /**
+     * Saves a list of tasks in the local and then in the remote repository
+     *
+     * @param tasks the tasks to be saved
+     * @return a completable that emits when the tasks were saved or in case of error.
+     */
     @Override
     public Completable saveTasks(@NonNull List<Task> tasks) {
         checkNotNull(tasks);
-        Completable remoteCompletable = mTasksRemoteDataSource.saveTasks(tasks);
-        Completable localCompletable = mTasksLocalDataSource.saveTasks(tasks);
-        return Completable.concat(remoteCompletable, localCompletable);
+        return mTasksLocalDataSource.saveTasks(tasks)
+                .andThen(mTasksRemoteDataSource.saveTasks(tasks));
     }
 
     @Override

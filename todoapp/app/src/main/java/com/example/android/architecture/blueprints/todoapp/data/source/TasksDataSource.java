@@ -31,19 +31,16 @@ import rx.Observable;
  */
 public interface TasksDataSource {
 
+    @NonNull
     Observable<List<Task>> getTasks();
 
+    @NonNull
     Observable<Task> getTask(@NonNull String taskId);
 
-    /**
-     * Saves a task in the local and then in the remote repository
-     *
-     * @param task the task to be saved
-     * @return a completable that emits when the task was saved or in case of error.
-     */
     @NonNull
     Completable saveTask(@NonNull Task task);
 
+    @NonNull
     Completable saveTasks(@NonNull List<Task> tasks);
 
     void completeTask(@NonNull Task task);

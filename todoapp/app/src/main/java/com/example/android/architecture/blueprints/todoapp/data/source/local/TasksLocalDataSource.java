@@ -23,7 +23,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
@@ -38,9 +37,7 @@ import rx.Completable;
 import rx.Observable;
 import rx.functions.Func1;
 
-import static android.os.Looper.getMainLooper;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Thread.currentThread;
 
 
 /**
@@ -123,19 +120,9 @@ public class TasksLocalDataSource implements TasksDataSource {
     public Completable saveTask(@NonNull Task task) {
         checkNotNull(task);
         return Completable.fromAction(() -> {
-            Log.d("flo", "flo is main thread? " + getMainLooper().getThread().equals(currentThread()));
             ContentValues values = toContentValues(task);
             mDatabaseHelper.insert(TaskEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
         });
-//        return Completable.fromCallable(new Callable<Void>() {
-//            @Override
-//            public Void call() throws Exception {
-//                Log.d("flo", "flo is main thread? " + getMainLooper().getThread().equals(currentThread()));
-//                ContentValues values = toContentValues(task);
-//                mDatabaseHelper.insert(TaskEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
-//                return null;
-//            }
-//        });
     }
 
     @Override
