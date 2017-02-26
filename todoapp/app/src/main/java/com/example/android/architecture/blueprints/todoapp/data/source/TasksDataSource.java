@@ -43,13 +43,15 @@ public interface TasksDataSource {
     @NonNull
     Completable saveTasks(@NonNull List<Task> tasks);
 
-    void completeTask(@NonNull Task task);
+    @NonNull
+    Completable completeTask(@NonNull Task task);
 
-    void completeTask(@NonNull String taskId);
+    @NonNull
+    Completable completeTask(@NonNull String taskId);
 
-    void activateTask(@NonNull Task task);
+    Completable activateTask(@NonNull Task task);
 
-    void activateTask(@NonNull String taskId);
+    Completable activateTask(@NonNull String taskId);
 
     void clearCompletedTasks();
 

@@ -60,7 +60,7 @@ public class TasksLocalDataSource implements TasksDataSource {
         checkNotNull(context, "context cannot be null");
         checkNotNull(schedulerProvider, "scheduleProvider cannot be null");
         TasksDbHelper dbHelper = new TasksDbHelper(context);
-        SqlBrite sqlBrite = SqlBrite.create();
+        SqlBrite sqlBrite = new SqlBrite.Builder().build();
         mDatabaseHelper = sqlBrite.wrapDatabaseHelper(dbHelper, schedulerProvider.io());
         mTaskMapperFunction = this::getTask;
     }
@@ -160,33 +160,38 @@ public class TasksLocalDataSource implements TasksDataSource {
     }
 
     @Override
-    public void completeTask(@NonNull Task task) {
-        completeTask(task.getId());
+    public Completable completeTask(@NonNull Task task) {
+        checkNotNull(task);
+        return completeTask(task.getId());
     }
 
     @Override
-    public void completeTask(@NonNull String taskId) {
-        ContentValues values = new ContentValues();
-        values.put(TaskEntry.COLUMN_NAME_COMPLETED, true);
+    public Completable completeTask(@NonNull String taskId) {
+        return Completable.fromAction(() -> {
+            ContentValues values = new ContentValues();
+            values.put(TaskEntry.COLUMN_NAME_COMPLETED, true);
 
-        String selection = TaskEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
-        String[] selectionArgs = {taskId};
-        mDatabaseHelper.update(TaskEntry.TABLE_NAME, values, selection, selectionArgs);
+            String selection = TaskEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
+            String[] selectionArgs = {taskId};
+            mDatabaseHelper.update(TaskEntry.TABLE_NAME, values, selection, selectionArgs);
+        });
     }
 
     @Override
-    public void activateTask(@NonNull Task task) {
-        activateTask(task.getId());
+    public Completable activateTask(@NonNull Task task) {
+        return activateTask(task.getId());
     }
 
     @Override
-    public void activateTask(@NonNull String taskId) {
-        ContentValues values = new ContentValues();
-        values.put(TaskEntry.COLUMN_NAME_COMPLETED, false);
+    public Completable activateTask(@NonNull String taskId) {
+        return Completable.fromAction(() -> {
+            ContentValues values = new ContentValues();
+            values.put(TaskEntry.COLUMN_NAME_COMPLETED, false);
 
-        String selection = TaskEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
-        String[] selectionArgs = {taskId};
-        mDatabaseHelper.update(TaskEntry.TABLE_NAME, values, selection, selectionArgs);
+            String selection = TaskEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
+            String[] selectionArgs = {taskId};
+            mDatabaseHelper.update(TaskEntry.TABLE_NAME, values, selection, selectionArgs);
+        });
     }
 
     @Override

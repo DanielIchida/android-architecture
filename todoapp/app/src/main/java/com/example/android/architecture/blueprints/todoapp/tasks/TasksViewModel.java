@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.util.Pair;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskActivity;
@@ -144,22 +145,26 @@ public final class TasksViewModel {
     }
 
     private void handleTaskChecked(Task task, boolean checked) {
-        if (checked) {
-            completeTask(task);
-        } else {
-            activateTask(task);
-        }
-        mTriggerForceUpdate.onNext(false);
+        Completable checkTask = checked ? completeTask(task) : activateTask(task);
+        checkTask.subscribeOn(mSchedulerProvider.computation())
+                .observeOn(mSchedulerProvider.computation())
+                .subscribe(
+                        //on Completed
+                        () -> {
+                        },
+                        // on error
+                        throwable -> Log.e(TAG, "Error completing or activating task")
+                );
     }
 
-    private void completeTask(Task completedTask) {
-        mTasksRepository.completeTask(completedTask);
-        mSnackbarText.onNext(R.string.task_marked_complete);
+    private Completable completeTask(Task completedTask) {
+        return mTasksRepository.completeTask(completedTask)
+                .doOnCompleted(() -> mSnackbarText.onNext(R.string.task_marked_complete));
     }
 
-    private void activateTask(Task activeTask) {
-        mTasksRepository.activateTask(activeTask);
-        mSnackbarText.onNext(R.string.task_marked_active);
+    private Completable activateTask(Task activeTask) {
+        return mTasksRepository.activateTask(activeTask)
+                .doOnCompleted(() -> mSnackbarText.onNext(R.string.task_marked_active));
     }
 
 

@@ -360,7 +360,7 @@ public class TasksViewModelTest {
         taskItem.getOnCheckAction().call(true);
 
         // The task is marked as completed
-        mTasksRepository.completeTask(ACTIVE_TASK);
+        verify(mTasksRepository).completeTask(ACTIVE_TASK);
     }
 
     @Test

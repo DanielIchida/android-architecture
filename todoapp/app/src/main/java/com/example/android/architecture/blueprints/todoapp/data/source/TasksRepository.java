@@ -18,6 +18,7 @@ package com.example.android.architecture.blueprints.todoapp.data.source;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
@@ -89,7 +90,8 @@ public class TasksRepository implements TasksDataSource {
      */
     @Override
     public Observable<List<Task>> getTasks() {
-        return mTasksLocalDataSource.getTasks();
+        return mTasksLocalDataSource.getTasks()
+                .doOnNext(x -> Log.d("flo", "flo local tasks: " + x));
     }
 
     /**
@@ -120,31 +122,31 @@ public class TasksRepository implements TasksDataSource {
     }
 
     @Override
-    public void completeTask(@NonNull Task task) {
+    public Completable completeTask(@NonNull Task task) {
         checkNotNull(task);
-        mTasksRemoteDataSource.completeTask(task);
-        mTasksLocalDataSource.completeTask(task);
+        return mTasksLocalDataSource.completeTask(task)
+                .andThen(mTasksRemoteDataSource.completeTask(task));
     }
 
     @Override
-    public void completeTask(@NonNull String taskId) {
+    public Completable completeTask(@NonNull String taskId) {
         checkNotNull(taskId);
-        mTasksRemoteDataSource.completeTask(taskId);
-        mTasksLocalDataSource.completeTask(taskId);
+        return mTasksLocalDataSource.completeTask(taskId)
+                .andThen(mTasksRemoteDataSource.completeTask(taskId));
     }
 
     @Override
-    public void activateTask(@NonNull Task task) {
+    public Completable activateTask(@NonNull Task task) {
         checkNotNull(task);
-        mTasksRemoteDataSource.activateTask(task);
-        mTasksLocalDataSource.activateTask(task);
+        return mTasksLocalDataSource.activateTask(task)
+                .andThen(mTasksRemoteDataSource.activateTask(task));
     }
 
     @Override
-    public void activateTask(@NonNull String taskId) {
+    public Completable activateTask(@NonNull String taskId) {
         checkNotNull(taskId);
-        mTasksRemoteDataSource.activateTask(taskId);
-        mTasksLocalDataSource.activateTask(taskId);
+        return mTasksLocalDataSource.activateTask(taskId)
+                .andThen(mTasksRemoteDataSource.activateTask(taskId));
     }
 
     @Override

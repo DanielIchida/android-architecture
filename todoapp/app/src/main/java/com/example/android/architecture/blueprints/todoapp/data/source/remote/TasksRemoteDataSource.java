@@ -94,29 +94,37 @@ public class TasksRemoteDataSource implements TasksDataSource {
     }
 
     @Override
-    public void completeTask(@NonNull Task task) {
-        Task completedTask = new Task(task.getTitle(), task.getDescription(), task.getId(), true);
-        TASKS_SERVICE_DATA.put(task.getId(), completedTask);
+    public Completable completeTask(@NonNull Task task) {
+        return Completable.fromAction(() -> {
+            Task completedTask = new Task(task.getTitle(), task.getDescription(), task.getId(), true);
+            TASKS_SERVICE_DATA.put(task.getId(), completedTask);
+        });
     }
 
     @Override
-    public void completeTask(@NonNull String taskId) {
-        Task task = TASKS_SERVICE_DATA.get(taskId);
-        task = new Task(task.getTitle(), task.getDescription(), taskId, true);
-        TASKS_SERVICE_DATA.put(task.getId(), task);
+    public Completable completeTask(@NonNull String taskId) {
+        return Completable.fromAction(() -> {
+            Task task = TASKS_SERVICE_DATA.get(taskId);
+            task = new Task(task.getTitle(), task.getDescription(), taskId, true);
+            TASKS_SERVICE_DATA.put(task.getId(), task);
+        });
     }
 
     @Override
-    public void activateTask(@NonNull Task task) {
-        Task activeTask = new Task(task.getTitle(), task.getDescription(), task.getId());
-        TASKS_SERVICE_DATA.put(task.getId(), activeTask);
+    public Completable activateTask(@NonNull Task task) {
+        return Completable.fromAction(() -> {
+            Task activeTask = new Task(task.getTitle(), task.getDescription(), task.getId());
+            TASKS_SERVICE_DATA.put(task.getId(), activeTask);
+        });
     }
 
     @Override
-    public void activateTask(@NonNull String taskId) {
-        Task task = TASKS_SERVICE_DATA.get(taskId);
-        task = new Task(task.getTitle(), task.getDescription(), taskId, false);
-        TASKS_SERVICE_DATA.put(task.getId(), task);
+    public Completable activateTask(@NonNull String taskId) {
+        return Completable.fromAction(() -> {
+            Task task = TASKS_SERVICE_DATA.get(taskId);
+            task = new Task(task.getTitle(), task.getDescription(), taskId, false);
+            TASKS_SERVICE_DATA.put(task.getId(), task);
+        });
     }
 
     @Override

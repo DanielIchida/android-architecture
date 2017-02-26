@@ -170,7 +170,7 @@ public class TasksRepositoryTest {
         mTasksRepository.saveTask(newTask);
 
         // When a task is completed to the tasks repository
-        mTasksRepository.completeTask(newTask);
+        mTasksRepository.completeTask(newTask).subscribe();
 
         // Then the service API and persistent repository are called and the cache is updated
         verify(mTasksRemoteDataSource).completeTask(newTask);
@@ -184,7 +184,7 @@ public class TasksRepositoryTest {
         mTasksRepository.saveTask(newTask).subscribe();
 
         // When a task is completed using its id to the tasks repository
-        mTasksRepository.completeTask(newTask.getId());
+        mTasksRepository.completeTask(newTask.getId()).subscribe();
 
         // Then the service API and persistent repository are called and the cache is updated
         verify(mTasksRemoteDataSource).completeTask(newTask);
@@ -372,7 +372,7 @@ public class TasksRepositoryTest {
     @Test
     public void getTasks_refreshesLocalDataSource() {
         // Given that the remote data source has data available
-        setTasksAvailable(mTasksLocalDataSource, TASKS);
+        setTasksAvailable(mTasksRemoteDataSource, TASKS);
 
         // Mark cache as dirty to force a reload of data from remote data source.
         mTasksRepository.refreshTasks();
