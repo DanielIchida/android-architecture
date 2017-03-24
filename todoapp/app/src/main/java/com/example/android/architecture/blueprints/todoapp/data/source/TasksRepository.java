@@ -162,22 +162,37 @@ public class TasksRepository implements TasksDataSource {
     @Override
     public Observable<Task> getTask(@NonNull final String taskId) {
         checkNotNull(taskId);
-        return mTasksLocalDataSource.getTask(taskId);
+        return mTasksLocalDataSource.getTask(taskId)
+                .flatMap(task -> task == null
+                        ? mTasksRemoteDataSource.getTask(taskId)
+                        : Observable.just(task));
     }
 
+    /**
+     * Get the tasks from the remote data source and save them in the local data source.
+     */
     @Override
-    public void refreshTasks() {
-        mTasksRemoteDataSource.getTasks()
+    public Completable refreshTasks() {
+        return mTasksRemoteDataSource.getTasks()
                 .subscribeOn(mBaseSchedulerProvider.io())
-                .subscribe(mTasksLocalDataSource::saveTasks);
+                .doOnNext(mTasksLocalDataSource::saveTasks)
+                .toCompletable();
     }
 
+    /**
+     * Delete tasks from remote and local repositories.
+     */
     @Override
     public void deleteAllTasks() {
         mTasksRemoteDataSource.deleteAllTasks();
         mTasksLocalDataSource.deleteAllTasks();
     }
 
+    /**
+     * Delete a task based on the task id from remote and local repositories.
+     *
+     * @param taskId a task id
+     */
     @Override
     public void deleteTask(@NonNull String taskId) {
         mTasksRemoteDataSource.deleteTask(checkNotNull(taskId));

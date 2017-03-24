@@ -29,7 +29,6 @@ import java.util.Map;
 
 import rx.Completable;
 import rx.Observable;
-import rx.subjects.PublishSubject;
 
 /**
  * Implementation of a remote data source with static access to the data for easy testing.
@@ -38,7 +37,6 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
 
     private static final Map<String, Task> TASKS_SERVICE_DATA = new LinkedHashMap<>();
     private static FakeTasksRemoteDataSource INSTANCE;
-    private PublishSubject<Boolean> mRepeatWhen = PublishSubject.create();
 
     // Prevent direct instantiation.
     private FakeTasksRemoteDataSource() {
@@ -54,15 +52,13 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
     @Override
     public Observable<List<Task>> getTasks() {
         List<Task> values = new ArrayList<>(TASKS_SERVICE_DATA.values());
-        return Observable.just(values)
-                .repeatWhen(observable -> mRepeatWhen);
+        return Observable.just(values);
     }
 
     @Override
     public Observable<Task> getTask(@NonNull String taskId) {
         Task task = TASKS_SERVICE_DATA.get(taskId);
-        return Observable.just(task)
-                .repeatWhen(observable -> mRepeatWhen);
+        return Observable.just(task);
     }
 
     @Override
@@ -121,23 +117,20 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
                 it.remove();
             }
         }
-        mRepeatWhen.onNext(true);
     }
 
-    public void refreshTasks() {
-        mRepeatWhen.onNext(true);
+    public Completable refreshTasks() {
+        return Completable.complete();
     }
 
     @Override
     public void deleteTask(@NonNull String taskId) {
         TASKS_SERVICE_DATA.remove(taskId);
-        mRepeatWhen.onNext(true);
     }
 
     @Override
     public void deleteAllTasks() {
         TASKS_SERVICE_DATA.clear();
-        mRepeatWhen.onNext(true);
     }
 
     @VisibleForTesting
@@ -145,6 +138,5 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
         for (Task task : tasks) {
             TASKS_SERVICE_DATA.put(task.getId(), task);
         }
-        mRepeatWhen.onNext(true);
     }
 }

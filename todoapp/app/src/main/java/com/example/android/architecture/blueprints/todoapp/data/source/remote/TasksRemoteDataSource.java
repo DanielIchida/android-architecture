@@ -139,9 +139,10 @@ public class TasksRemoteDataSource implements TasksDataSource {
     }
 
     @Override
-    public void refreshTasks() {
+    public Completable refreshTasks() {
         // Not required because the {@link TasksRepository} handles the logic of refreshing the
         // tasks from all the available data sources.
+        return Completable.complete();
     }
 
     @Override

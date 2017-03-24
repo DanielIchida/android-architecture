@@ -55,7 +55,7 @@ public interface TasksDataSource {
 
     void clearCompletedTasks();
 
-    void refreshTasks();
+    Completable refreshTasks();
 
     void deleteAllTasks();
 
