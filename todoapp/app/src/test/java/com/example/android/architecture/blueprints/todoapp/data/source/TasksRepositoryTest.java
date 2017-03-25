@@ -160,19 +160,36 @@ public class TasksRepositoryTest {
         mTasksTestSubscriber.assertValue(TASKS);
     }
 
-    @Ignore
     @Test
-    public void saveTask_savesTaskToServiceAPI() {
-        // Given a stub task with title and description
-        when(mTasksLocalDataSource.saveTask(ACTIVE_TASK)).thenReturn(Completable.complete());
-        when(mTasksRemoteDataSource.saveTask(ACTIVE_TASK)).thenReturn(Completable.complete());
+    public void saveTasks_savesTasksToRemoteDataSource() {
+        // Given that a task is saved successfully in local and remote data sources
+        new ArrangeBuilder()
+                .withTasksSaved(mTasksLocalDataSource, TASKS)
+                .withTasksSaved(mTasksRemoteDataSource, TASKS);
 
         // When a task is saved to the tasks repository
-        mTasksRepository.saveTask(ACTIVE_TASK).subscribe();
+        mTasksRepository.saveTasks(TASKS)
+                .subscribe(mTestSubscriber);
 
-        // Then the service API and persistent repository are called and the cache is updated
-        verify(mTasksRemoteDataSource).saveTask(ACTIVE_TASK);
-        verify(mTasksLocalDataSource).saveTask(ACTIVE_TASK);
+        // Then completable completes without error
+        mTestSubscriber.assertCompleted();
+        mTestSubscriber.assertNoErrors();
+    }
+
+    @Test
+    public void saveTask_savesTaskToRemoteDataSource() {
+        // Given that a task is saved successfully in local and remote data sources
+        new ArrangeBuilder()
+                .withTaskSaved(mTasksLocalDataSource, ACTIVE_TASK)
+                .withTaskSaved(mTasksRemoteDataSource, ACTIVE_TASK);
+
+        // When a task is saved to the tasks repository
+        mTasksRepository.saveTask(ACTIVE_TASK)
+                .subscribe(mTestSubscriber);
+
+        // Then completable completes without error
+        mTestSubscriber.assertCompleted();
+        mTestSubscriber.assertNoErrors();
     }
 
     @Test
@@ -421,21 +438,19 @@ public class TasksRepositoryTest {
         testSubscriber.assertError(NoSuchElementException.class);
     }
 
-    @Ignore
     @Test
-    public void getTasks_refreshesLocalDataSource() {
+    public void refreshTasks_completesWithData() {
         // Given that the remote data source has data available
+        // And the data is then saved in the local data source
         new ArrangeBuilder()
-                .withTasksAvailable(mTasksRemoteDataSource, TASKS);
+                .withTasksAvailable(mTasksRemoteDataSource, TASKS)
+                .withTasksSaved(mTasksLocalDataSource, TASKS);
 
-        // Mark cache as dirty to force a reload of data from remote data source.
-        mTasksRepository.refreshTasks();
+        // When refreshing tasks
+        mTasksRepository.refreshTasks()
+        .subscribe(mTasksTestSubscriber);
 
-        // When calling getTasks in the repository
-        mTasksRepository.getTasks().subscribe(mTasksTestSubscriber);
-
-        // Verify that the data fetched from the remote data source was saved in local.
-        verify(mTasksLocalDataSource, times(TASKS.size())).saveTask(any(Task.class));
+        // The correct task are emitted
         mTasksTestSubscriber.assertValue(TASKS);
     }
 
@@ -487,6 +502,16 @@ public class TasksRepositoryTest {
                                                   Task task,
                                                   Exception exception) {
             when(dataSource.completeTask(task)).thenReturn(Completable.error(exception));
+            return this;
+        }
+
+        ArrangeBuilder withTaskSaved(TasksDataSource dataSource, Task task) {
+            when(dataSource.saveTask(task)).thenReturn(Completable.complete());
+            return this;
+        }
+
+        ArrangeBuilder withTasksSaved(TasksDataSource dataSource, List<Task> tasks) {
+            when(dataSource.saveTasks(tasks)).thenReturn(Completable.complete());
             return this;
         }
     }

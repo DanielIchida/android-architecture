@@ -90,9 +90,6 @@ public class TasksRepository implements TasksDataSource {
     @Override
     public Observable<List<Task>> getTasks() {
         return mTasksLocalDataSource.getTasks()
-                .flatMap(tasks -> tasks.isEmpty()
-                        ? refreshTasks()
-                        : Observable.just(tasks))
                 .share();
     }
 
