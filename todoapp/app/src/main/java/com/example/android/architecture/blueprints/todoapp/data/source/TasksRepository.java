@@ -18,7 +18,6 @@ package com.example.android.architecture.blueprints.todoapp.data.source;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
@@ -91,7 +90,10 @@ public class TasksRepository implements TasksDataSource {
     @Override
     public Observable<List<Task>> getTasks() {
         return mTasksLocalDataSource.getTasks()
-                .doOnNext(x -> Log.d("flo", "flo local tasks: " + x));
+                .flatMap(tasks -> tasks.isEmpty()
+                        ? refreshTasks()
+                        : Observable.just(tasks))
+                .share();
     }
 
     /**
@@ -172,11 +174,10 @@ public class TasksRepository implements TasksDataSource {
      * Get the tasks from the remote data source and save them in the local data source.
      */
     @Override
-    public Completable refreshTasks() {
+    public Observable<List<Task>> refreshTasks() {
         return mTasksRemoteDataSource.getTasks()
                 .subscribeOn(mBaseSchedulerProvider.io())
-                .doOnNext(mTasksLocalDataSource::saveTasks)
-                .toCompletable();
+                .doOnNext(mTasksLocalDataSource::saveTasks);
     }
 
     /**

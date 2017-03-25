@@ -139,10 +139,12 @@ public class TasksRemoteDataSource implements TasksDataSource {
     }
 
     @Override
-    public Completable refreshTasks() {
+    public Observable<List<Task>> refreshTasks() {
         // Not required because the {@link TasksRepository} handles the logic of refreshing the
         // tasks from all the available data sources.
-        return Completable.complete();
+        return Observable
+                .from(TASKS_SERVICE_DATA.values())
+                .toList();
     }
 
     @Override

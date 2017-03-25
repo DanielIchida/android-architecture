@@ -119,8 +119,10 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
         }
     }
 
-    public Completable refreshTasks() {
-        return Completable.complete();
+    public Observable<List<Task>> refreshTasks() {
+        List<Task> values = new ArrayList<>(TASKS_SERVICE_DATA.values());
+        return Observable.just(values);
+
     }
 
     @Override
