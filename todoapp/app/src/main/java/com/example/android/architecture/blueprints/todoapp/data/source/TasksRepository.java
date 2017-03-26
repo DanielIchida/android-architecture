@@ -155,16 +155,12 @@ public class TasksRepository implements TasksDataSource {
     }
 
     /**
-     * Gets tasks from local data source (sqlite) unless the table is new or empty. In that case it
-     * uses the network data source. This is done to simplify the sample.
+     * Gets task from local data source (sqlite).
      */
     @Override
     public Observable<Task> getTask(@NonNull final String taskId) {
         checkNotNull(taskId);
-        return mTasksLocalDataSource.getTask(taskId)
-                .flatMap(task -> task == null
-                        ? mTasksRemoteDataSource.getTask(taskId)
-                        : Observable.just(task));
+        return mTasksLocalDataSource.getTask(taskId);
     }
 
     /**
