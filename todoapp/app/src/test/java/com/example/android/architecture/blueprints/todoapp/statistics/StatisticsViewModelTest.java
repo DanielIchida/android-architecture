@@ -18,8 +18,7 @@ import java.util.List;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +28,9 @@ import static org.mockito.Mockito.when;
 public class StatisticsViewModelTest {
 
     private static final String NO_TASKS = "no tasks";
+
+    private static final String LOADING = "loading";
+    private static final String LOADING_ERROR = "loading error";
 
     private List<Task> mTasks;
 
@@ -40,9 +42,7 @@ public class StatisticsViewModelTest {
 
     private StatisticsViewModel mViewModel;
 
-    private TestSubscriber<Boolean> mProgressIndicatorTestSubscriber;
-
-    private TestSubscriber<String> mStatisticsTestSubscriber;
+    private TestSubscriber<StatisticsUiModel> mTestSubscriber;
 
     @Before
     public void setupStatisticsPresenter() {
@@ -58,23 +58,28 @@ public class StatisticsViewModelTest {
                 new Task("Title1", "Description1"),
                 new Task("Title2", "Description2", true),
                 new Task("Title3", "Description3", true));
-        mProgressIndicatorTestSubscriber = new TestSubscriber<>();
-        mStatisticsTestSubscriber = new TestSubscriber<>();
+        mTestSubscriber = new TestSubscriber<>();
     }
 
     @Test
-    public void getProgressIndicator_emitsFalseInitially() {
-        // When subscribing to the progress indicator
-        mViewModel.getProgressIndicator().subscribe(mProgressIndicatorTestSubscriber);
+    public void getStatistics_emitsLoadingInitially() {
+        //Given a list of tasks in the repository
+        when(mTasksRepository.refreshTasks()).thenReturn(Observable.never());
 
-        // One value: false, is emitted
-        mProgressIndicatorTestSubscriber.assertValue(false);
+        withText(R.string.loading, LOADING);
+
+        // When subscribing to the progress indicator
+        mViewModel.getStatistics().subscribe(mTestSubscriber);
+
+        // One value, that contains the string loading, is emitted
+        mTestSubscriber.assertValueCount(1);
+        assertEquals(mTestSubscriber.getOnNextEvents().get(0).getText(), LOADING);
     }
 
     @Test
     public void getStatistics_withTasks_returnsCorrectData() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(mTasks));
+        when(mTasksRepository.refreshTasks()).thenReturn(Observable.just(mTasks));
 
         //When subscribing to the statistics stream
         mViewModel.getStatistics().subscribe();
@@ -86,46 +91,31 @@ public class StatisticsViewModelTest {
     @Test
     public void getStatistics_withNoTasks_returnsCorrectData() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.getTasks()).thenReturn(Observable.<List<Task>>empty());
+        when(mTasksRepository.refreshTasks()).thenReturn(Observable.empty());
         // And string resources
         withText(R.string.statistics_no_tasks, NO_TASKS);
 
         //When subscribing to the statistics stream
-        mViewModel.getStatistics().subscribe(mStatisticsTestSubscriber);
+        mViewModel.getStatistics().subscribe(mTestSubscriber);
 
-        //The correct pair is returned
-        String result = mStatisticsTestSubscriber.getOnNextEvents().get(0);
-        assertThat(result, is(NO_TASKS));
+        //The correct text is returned
+        String result = mTestSubscriber.getOnNextEvents().get(1).getText();
+        assertEquals(result, NO_TASKS);
     }
 
     @Test
-    public void getProgressIndicator_emits_afterStatisticsAreRetrieved() {
+    public void getStatistics_emitsCorrectUiModel_afterStatisticsAreRetrieved_WithError() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(mTasks));
+        when(mTasksRepository.refreshTasks()).thenReturn(Observable.error(new Exception()));
+        // And a string to be returned for loading error
+        withText(R.string.loading_tasks_error, LOADING_ERROR);
 
-        // And when subscribing to the progress indicator
-        mViewModel.getProgressIndicator().subscribe(mProgressIndicatorTestSubscriber);
         //When subscribing to the statistics stream
-        mViewModel.getStatistics().subscribe();
-
-        // The intial value, false is emitted,
-        // then values true and false were emitted
-        mProgressIndicatorTestSubscriber.assertValues(false, true, false);
-    }
-
-    @Test
-    public void getProgressIndicator_emits_afterStatisticsAreRetrieved_WithError() {
-        //Given a list of tasks in the repository
-        when(mTasksRepository.getTasks()).thenReturn(Observable.<List<Task>>error(new Exception()));
-
-        // And when subscribing to the progress indicator
-        mViewModel.getProgressIndicator().subscribe(mProgressIndicatorTestSubscriber);
-        //When subscribing to the statistics stream
-        mViewModel.getStatistics().subscribe(mStatisticsTestSubscriber);
+        mViewModel.getStatistics().subscribe(mTestSubscriber);
 
         // The initial value, false is emitted,
         // then values true and false were emitted
-        mProgressIndicatorTestSubscriber.assertValues(false, true, false);
+        assertEquals(mTestSubscriber.getOnNextEvents().get(1).getText(), LOADING_ERROR);
     }
 
     private void withText(@StringRes int stringId, String returnedString) {
