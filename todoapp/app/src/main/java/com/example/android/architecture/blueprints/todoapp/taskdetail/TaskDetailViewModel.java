@@ -77,7 +77,7 @@ public class TaskDetailViewModel {
      * task has been retrieved.
      */
     @NonNull
-    public Observable<TaskModel> getTask() {
+    public Observable<TaskUiModel> getTask() {
         if (Strings.isNullOrEmpty(mTaskId)) {
             return Observable.error(new Exception("Task id null or empty"));
         }
@@ -89,11 +89,11 @@ public class TaskDetailViewModel {
     }
 
     @NonNull
-    private TaskModel createModel(Task task) {
+    private TaskUiModel createModel(Task task) {
         boolean isTitleVisible = !Strings.isNullOrEmpty(task.getTitle());
         boolean isDescriptionVisible = !Strings.isNullOrEmpty(task.getDescription());
 
-        return new TaskModel(isTitleVisible, task.getTitle(), isDescriptionVisible,
+        return new TaskUiModel(isTitleVisible, task.getTitle(), isDescriptionVisible,
                 task.getDescription(), task.isCompleted());
     }
 

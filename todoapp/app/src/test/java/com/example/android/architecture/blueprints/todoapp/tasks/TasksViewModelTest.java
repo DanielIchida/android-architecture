@@ -51,7 +51,7 @@ public class TasksViewModelTest {
 
     private TasksViewModel mViewModel;
 
-    private TestSubscriber<TasksModel> mTasksSubscriber;
+    private TestSubscriber<TasksUiModel> mTasksSubscriber;
 
     private TestSubscriber<Boolean> mProgressIndicatorSubscriber;
 
@@ -118,7 +118,7 @@ public class TasksViewModelTest {
 
         // The tasks model containing the list of tasks is emitted
         mTasksSubscriber.assertValueCount(1);
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(0);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(0);
         assertTasksModelWithTasksVisible(model);
     }
 
@@ -136,7 +136,7 @@ public class TasksViewModelTest {
         // and another one for the new filter
         mTasksSubscriber.assertValueCount(2);
         // And the 2nd tasks models list contains only one value
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(1);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
         assertEquals(model.getItemList().size(), 1);
         // And the TaskItem is the active task
         assertTask(model.getItemList().get(0), TASKS.get(0), R.drawable.touch_feedback);
@@ -154,7 +154,7 @@ public class TasksViewModelTest {
 
         // Two tasks models are emitted, both with the same value
         mTasksSubscriber.assertValueCount(2);
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(1);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
         assertTasksModelWithTasksVisible(model);
     }
 
@@ -170,7 +170,7 @@ public class TasksViewModelTest {
 
         // Two tasks models are emitted, both with the same value
         mTasksSubscriber.assertValueCount(2);
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(1);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
         assertTasksModelWithTasksVisible(model);
     }
 
@@ -213,7 +213,7 @@ public class TasksViewModelTest {
 
         // NoTasks emits
         mTasksSubscriber.assertValueCount(1);
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(0);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(0);
         assertTasksModelWithNoTasksVisible(model);
         assertNoTasks(model.getNoTasksModel(), R.string.no_tasks_all,
                 R.drawable.ic_assignment_turned_in_24dp, true);
@@ -231,9 +231,9 @@ public class TasksViewModelTest {
         // When subscribed to the tasks
         mViewModel.getTasksModel().subscribe(mTasksSubscriber);
 
-        // TasksModel emits with no tasks
+        // TasksUiModel emits with no tasks
         mTasksSubscriber.assertValueCount(1);
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(0);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(0);
         assertTasksModelWithNoTasksVisible(model);
         assertNoTasks(model.getNoTasksModel(), R.string.no_tasks_active,
                 R.drawable.ic_check_circle_24dp, false);
@@ -251,9 +251,9 @@ public class TasksViewModelTest {
         // When subscribed to the tasks
         mViewModel.getTasksModel().subscribe(mTasksSubscriber);
 
-        // TasksModel emits with no tasks
+        // TasksUiModel emits with no tasks
         mTasksSubscriber.assertValueCount(1);
-        TasksModel model = mTasksSubscriber.getOnNextEvents().get(0);
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(0);
         assertTasksModelWithNoTasksVisible(model);
         assertNoTasks(model.getNoTasksModel(), R.string.no_tasks_completed,
                 R.drawable.ic_verified_user_24dp, false);
@@ -458,7 +458,7 @@ public class TasksViewModelTest {
         mTasksSubscriber.assertValueCount(2);
     }
 
-    private void assertTasksModelWithNoTasksVisible(TasksModel model) {
+    private void assertTasksModelWithNoTasksVisible(TasksUiModel model) {
         assertFalse(model.isTasksListVisible());
         assertTrue(model.getItemList().isEmpty());
         assertTrue(model.isNoTasksViewVisible());
@@ -471,7 +471,7 @@ public class TasksViewModelTest {
         assertEquals(model.isShowAdd(), expectedShowAdd);
     }
 
-    private void assertTasksModelWithTasksVisible(TasksModel model) {
+    private void assertTasksModelWithTasksVisible(TasksUiModel model) {
         assertTrue(model.isTasksListVisible());
         assertTaskItems(model.getItemList());
         assertFalse(model.isNoTasksViewVisible());

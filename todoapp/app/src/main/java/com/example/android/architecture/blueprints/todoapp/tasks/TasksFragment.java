@@ -173,7 +173,7 @@ public class TasksFragment extends Fragment {
         mSubscription.unsubscribe();
     }
 
-    private void setupView(TasksModel model) {
+    private void setupView(TasksUiModel model) {
         int tasksListVisiblity = model.isTasksListVisible() ? View.VISIBLE : View.GONE;
         int noTasksViewVisibility = model.isNoTasksViewVisible() ? View.VISIBLE : View.GONE;
         mTasksView.setVisibility(tasksListVisiblity);

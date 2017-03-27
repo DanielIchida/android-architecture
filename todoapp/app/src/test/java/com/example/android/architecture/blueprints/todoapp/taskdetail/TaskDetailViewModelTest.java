@@ -38,7 +38,7 @@ public class TaskDetailViewModelTest {
 
     private TestSubscriber<Void> mTestSubscriber;
 
-    private TestSubscriber<TaskModel> mTaskTestSubscriber;
+    private TestSubscriber<TaskUiModel> mTaskTestSubscriber;
 
     private TestSubscriber<Integer> mSnackbarTestSubscriber;
 
@@ -93,8 +93,8 @@ public class TaskDetailViewModelTest {
         mViewModel.getTask().subscribe(mTaskTestSubscriber);
 
         // The correct task is emitted
-        TaskModel taskModel = mTaskTestSubscriber.getOnNextEvents().get(0);
-        assertTaskWithTitleAndDescription(taskModel);
+        TaskUiModel taskUiModel = mTaskTestSubscriber.getOnNextEvents().get(0);
+        assertTaskWithTitleAndDescription(taskUiModel);
     }
 
     @Test
@@ -110,8 +110,8 @@ public class TaskDetailViewModelTest {
         mViewModel.getTask().subscribe(mTaskTestSubscriber);
 
         // The correct task is emitted
-        TaskModel taskModel = mTaskTestSubscriber.getOnNextEvents().get(0);
-        assertTaskWithTitleAndCompleted(taskModel);
+        TaskUiModel taskUiModel = mTaskTestSubscriber.getOnNextEvents().get(0);
+        assertTaskWithTitleAndCompleted(taskUiModel);
     }
 
     @Test
@@ -300,7 +300,7 @@ public class TaskDetailViewModelTest {
         mSnackbarTestSubscriber.assertValue(R.string.task_marked_active);
     }
 
-    private void assertTaskWithTitleAndDescription(TaskModel model) {
+    private void assertTaskWithTitleAndDescription(TaskUiModel model) {
         assertEquals(model.getTitle(), TASK_WITH_TITLE_DESCRIPTION.getTitle());
         assertTrue(model.isShowTitle());
         assertEquals(model.getDescription(), TASK_WITH_TITLE_DESCRIPTION.getDescription());
@@ -308,7 +308,7 @@ public class TaskDetailViewModelTest {
         assertFalse(model.isChecked());
     }
 
-    private void assertTaskWithTitleAndCompleted(TaskModel model) {
+    private void assertTaskWithTitleAndCompleted(TaskUiModel model) {
         assertEquals(model.getTitle(), TASK_WITH_TITLE_COMPLETED.getTitle());
         assertTrue(model.isShowTitle());
         assertEquals(model.getDescription(), TASK_WITH_TITLE_COMPLETED.getDescription());

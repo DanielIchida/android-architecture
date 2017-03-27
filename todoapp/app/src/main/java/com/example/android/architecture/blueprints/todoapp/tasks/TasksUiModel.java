@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Model for the list of tasks screen.
  */
-class TasksModel {
+class TasksUiModel {
 
     private final boolean mIsTasksListVisible;
 
@@ -18,8 +18,8 @@ class TasksModel {
     @Nullable
     private final NoTasksModel mNoTasksModel;
 
-    public TasksModel(boolean isTasksListVisible, List<TaskItem> itemList,
-                      boolean isNoTasksViewVisible, NoTasksModel noTasksModel) {
+    public TasksUiModel(boolean isTasksListVisible, List<TaskItem> itemList,
+                        boolean isNoTasksViewVisible, NoTasksModel noTasksModel) {
         mIsTasksListVisible = isTasksListVisible;
         mItemList = itemList;
         mIsNoTasksViewVisible = isNoTasksViewVisible;

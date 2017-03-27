@@ -73,7 +73,7 @@ public final class TasksViewModel {
      * @return the model for the tasks list.
      */
     @NonNull
-    public Observable<TasksModel> getTasksModel() {
+    public Observable<TasksUiModel> getTasksModel() {
         return getTaskItems()
                 .doOnSubscribe(() -> mProgressIndicatorSubject.onNext(true))
                 .doOnNext(__ -> mProgressIndicatorSubject.onNext(false))
@@ -83,7 +83,7 @@ public final class TasksViewModel {
     }
 
     @NonNull
-    private TasksModel constructTasksModel(Pair<List<TaskItem>, TasksFilterType> pair) {
+    private TasksUiModel constructTasksModel(Pair<List<TaskItem>, TasksFilterType> pair) {
         List<TaskItem> tasks = pair.first;
         TasksFilterType filterType = pair.second;
 
@@ -94,7 +94,7 @@ public final class TasksViewModel {
             noTasksModel = getNoTasksModel(filterType);
         }
 
-        return new TasksModel(isTasksListVisible, tasks, isNoTasksViewVisible, noTasksModel);
+        return new TasksUiModel(isTasksListVisible, tasks, isNoTasksViewVisible, noTasksModel);
     }
 
     private Observable<List<TaskItem>> getTaskItems() {
