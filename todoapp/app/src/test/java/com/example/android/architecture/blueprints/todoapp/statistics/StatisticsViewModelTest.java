@@ -13,8 +13,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import rx.Completable;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -64,7 +66,8 @@ public class StatisticsViewModelTest {
     @Test
     public void getStatistics_emitsLoadingInitially() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.refreshTasks()).thenReturn(Observable.never());
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
+        when(mTasksRepository.getTasks()).thenReturn(Observable.never());
 
         withText(R.string.loading, LOADING);
 
@@ -79,7 +82,8 @@ public class StatisticsViewModelTest {
     @Test
     public void getStatistics_withTasks_returnsCorrectData() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.refreshTasks()).thenReturn(Observable.just(mTasks));
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
+        when(mTasksRepository.getTasks()).thenReturn(Observable.just(mTasks));
 
         //When subscribing to the statistics stream
         mViewModel.getStatistics().subscribe();
@@ -91,7 +95,8 @@ public class StatisticsViewModelTest {
     @Test
     public void getStatistics_withNoTasks_returnsCorrectData() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.refreshTasks()).thenReturn(Observable.empty());
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
+        when(mTasksRepository.getTasks()).thenReturn(Observable.just(new ArrayList<>()));
         // And string resources
         withText(R.string.statistics_no_tasks, NO_TASKS);
 
@@ -106,7 +111,8 @@ public class StatisticsViewModelTest {
     @Test
     public void getStatistics_emitsCorrectUiModel_afterStatisticsAreRetrieved_WithError() {
         //Given a list of tasks in the repository
-        when(mTasksRepository.refreshTasks()).thenReturn(Observable.error(new Exception()));
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
+        when(mTasksRepository.getTasks()).thenReturn(Observable.error(new Exception()));
         // And a string to be returned for loading error
         withText(R.string.loading_tasks_error, LOADING_ERROR);
 

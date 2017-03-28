@@ -157,16 +157,6 @@ public class TasksFragment extends Fragment {
                         //onError
                         error -> Log.d(TAG, "Error showing progress indicator", error)
                 ));
-
-        mSubscription.add(mViewModel.getFilterText()
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        //onNext
-                        this::setFilterLabel,
-                        //onError
-                        error -> Log.d(TAG, "Error setting filter label", error)
-                ));
     }
 
     private void unbindViewModel() {
@@ -185,6 +175,8 @@ public class TasksFragment extends Fragment {
         if (model.isNoTasksViewVisible() && model.getNoTasksModel() != null) {
             showNoTasks(model.getNoTasksModel());
         }
+
+        setFilterLabel(model.getFilterResId());
     }
 
     private void setupNoTasksView(View root) {
@@ -206,7 +198,7 @@ public class TasksFragment extends Fragment {
         // Set the scrolling view in the custom SwipeRefreshLayout.
         swipeRefreshLayout.setScrollUpChild(listView);
 
-        swipeRefreshLayout.setOnRefreshListener(() -> mViewModel.updateTasks());
+        swipeRefreshLayout.setOnRefreshListener(() -> forceUpdate());
     }
 
     private void setupFabButton() {
@@ -234,7 +226,7 @@ public class TasksFragment extends Fragment {
                 showFilteringPopUpMenu();
                 break;
             case R.id.menu_refresh:
-                mViewModel.forceUpdateTasks();
+                forceUpdate();
                 break;
         }
         return true;
@@ -251,6 +243,20 @@ public class TasksFragment extends Fragment {
                         },
                         //onError
                         error -> Log.d(TAG, "Error clearing completed tasks", error)
+                ));
+    }
+
+    private void forceUpdate() {
+        mSubscription.add(mViewModel.forceUpdateTasks()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        //onNext
+                        () -> {
+                            // nothing to do here
+                        },
+                        //onError
+                        error -> Log.d(TAG, "Error refreshing tasks", error)
                 ));
     }
 

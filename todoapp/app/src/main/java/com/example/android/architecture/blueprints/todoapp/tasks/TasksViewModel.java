@@ -87,6 +87,7 @@ public final class TasksViewModel {
         List<TaskItem> tasks = pair.first;
         TasksFilterType filterType = pair.second;
 
+        int filterTextResId = getFilterText(filterType);
         boolean isTasksListVisible = !tasks.isEmpty();
         boolean isNoTasksViewVisible = !isTasksListVisible;
         NoTasksModel noTasksModel = null;
@@ -94,7 +95,8 @@ public final class TasksViewModel {
             noTasksModel = getNoTasksModel(filterType);
         }
 
-        return new TasksUiModel(isTasksListVisible, tasks, isNoTasksViewVisible, noTasksModel);
+        return new TasksUiModel(filterTextResId, isTasksListVisible, tasks, isNoTasksViewVisible,
+                noTasksModel);
     }
 
     private Observable<List<TaskItem>> getTaskItems() {
@@ -177,16 +179,10 @@ public final class TasksViewModel {
     /**
      * Trigger a force update of the tasks.
      */
-    public void forceUpdateTasks() {
+    public Completable forceUpdateTasks() {
         mProgressIndicatorSubject.onNext(true);
-        mTriggerForceUpdate.onNext(true);
-    }
-
-    /**
-     * Update the list of tasks.
-     */
-    public void updateTasks() {
-        mTriggerForceUpdate.onNext(false);
+        return mTasksRepository.refreshTasks()
+                .doOnTerminate(() -> mProgressIndicatorSubject.onNext(false));
     }
 
     /**
@@ -268,15 +264,6 @@ public final class TasksViewModel {
         Bundle bundle = new Bundle();
         bundle.putSerializable(FILTER_KEY, mFilter.getValue());
         return bundle;
-    }
-
-    /**
-     * @return the filter text.
-     */
-    @NonNull
-    public Observable<Integer> getFilterText() {
-        return mFilter.map(this::getFilterText)
-                .distinctUntilChanged();
     }
 
     /**

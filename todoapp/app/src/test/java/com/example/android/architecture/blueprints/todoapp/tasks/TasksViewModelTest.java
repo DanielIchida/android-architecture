@@ -18,11 +18,11 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 
+import rx.Completable;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
 import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ACTIVE_TASKS;
-import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ALL_TASKS;
 import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.COMPLETED_TASKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -59,7 +59,7 @@ public class TasksViewModelTest {
 
     private TestSubscriber<Integer> mFilterTextSubscriber;
 
-    private TestSubscriber<Void> mCompletableSubscriber;
+    private TestSubscriber mCompletableSubscriber;
 
     @Before
     public void setupTasksPresenter() {
@@ -143,62 +143,44 @@ public class TasksViewModelTest {
     }
 
     @Test
-    public void getTask_emits_whenForceUpdateTasks() {
-        // Given that the task repository returns tasks
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
-        // Given that we are subscribed to the tasks
-        mViewModel.getTasksModel().subscribe(mTasksSubscriber);
+    public void forceUpdateTasks_completes_wheTasksRefereshed() {
+        // Given that the task repository refresh completes
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
 
         // When calling force update
-        mViewModel.forceUpdateTasks();
+        mViewModel.forceUpdateTasks().subscribe(mCompletableSubscriber);
 
-        // Two tasks models are emitted, both with the same value
-        mTasksSubscriber.assertValueCount(2);
-        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
-        assertTasksModelWithTasksVisible(model);
+        // The force update completable completes
+        mCompletableSubscriber.assertCompleted();
     }
 
     @Test
-    public void getTask_emits_whenUpdateTasks() {
-        // Given that the task repository returns tasks
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
-        // Given that we are subscribed to the tasks
-        mViewModel.getTasksModel().subscribe(mTasksSubscriber);
-
-        // When calling update tasks
-        mViewModel.updateTasks();
-
-        // Two tasks models are emitted, both with the same value
-        mTasksSubscriber.assertValueCount(2);
-        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
-        assertTasksModelWithTasksVisible(model);
-    }
-
-    @Test
-    public void progressIndicator_emits_whenForceUpdatingTasks() {
+    public void getProgressIndicator_emits_whenForceUpdateTasks() {
+        // Given that the task repository refresh completes
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
         // Given that we are subscribed to the progress indicator
         mViewModel.getProgressIndicator().subscribe(mProgressIndicatorSubscriber);
-        // Given that we are subscribed to the tasks
-        mViewModel.getTasksModel().subscribe();
 
         // When calling force update
-        mViewModel.forceUpdateTasks();
+        mViewModel.forceUpdateTasks().subscribe(mCompletableSubscriber);
 
-        // The progress indicator emits true
-        mProgressIndicatorSubscriber.assertValues(false, true, true);
+        // The progress indicator emits 3 times:
+        // with initial value false
+        // once true when the force update is called
+        // once false, when the force update completes
+        mProgressIndicatorSubscriber.assertValues(false, true, false);
     }
 
     @Test
     public void forceUpdateTasks_updatesTasksRepository() {
-        // Given that we are subscribed to the tasks
-        mViewModel.getTasksModel().subscribe();
+        // Given that refresh tasks completes
+        when(mTasksRepository.refreshTasks()).thenReturn(Completable.complete());
 
         // When calling force update
         mViewModel.forceUpdateTasks();
 
-        // The tasks are refreshed first the first time when subscribed and then when
-        // calling forceUpdateTasks
-        verify(mTasksRepository, times(2)).refreshTasks();
+        // The tasks are refreshed in the repository
+        verify(mTasksRepository).refreshTasks();
     }
 
     @Test
@@ -352,6 +334,7 @@ public class TasksViewModelTest {
     public void taskItem_withActiveTask_tapCheck_completesTask() {
         // Given a active task
         withTaskInRepositoryAndSubscribed(ACTIVE_TASK);
+        withTaskCompleted(ACTIVE_TASK);
         // And list of task items is emitted
         List<TaskItem> items = mTasksSubscriber.getOnNextEvents().get(0).getItemList();
         TaskItem taskItem = items.get(0);
@@ -367,6 +350,7 @@ public class TasksViewModelTest {
     public void taskItem_withActiveTask_tapCheck_snackbarMessageIsEmitted() {
         // Given a active task
         withTaskInRepositoryAndSubscribed(ACTIVE_TASK);
+        withTaskCompleted(ACTIVE_TASK);
         //Given that we are subscribed to the snackbar text
         mViewModel.getSnackbarMessage().subscribe(mSnackbarTextSubscriber);
         // And list of task items is emitted
@@ -384,6 +368,7 @@ public class TasksViewModelTest {
     public void taskItem_withCompletedTask_tapCheck_activatesTask() {
         // Given a completed task
         withTaskInRepositoryAndSubscribed(COMPLETED_TASK);
+        withTaskActivated(COMPLETED_TASK);
         // And list of task items is emitted
         List<TaskItem> items = mTasksSubscriber.getOnNextEvents().get(0).getItemList();
         TaskItem taskItem = items.get(0);
@@ -399,6 +384,8 @@ public class TasksViewModelTest {
     public void taskItem_withCompletedTask_tapCheck_snackbarMessageIsEmitted() {
         // Given a completed task
         withTaskInRepositoryAndSubscribed(COMPLETED_TASK);
+        // Given that the task is activated successfully
+        withTaskActivated(COMPLETED_TASK);
         //Given that we are subscribed to the snackbar text
         mViewModel.getSnackbarMessage().subscribe(mSnackbarTextSubscriber);
         // And list of task items is emitted
@@ -501,5 +488,12 @@ public class TasksViewModelTest {
         when(mTasksRepository.getTasks()).thenReturn(Observable.just(tasks));
         // Given that we are subscribed to the tasks
         mViewModel.getTasksModel().subscribe(mTasksSubscriber);
+    }
+
+    private void withTaskCompleted(Task task) {
+        when(mTasksRepository.completeTask(task)).thenReturn(Completable.complete());
+    }
+    private void withTaskActivated(Task task) {
+        when(mTasksRepository.activateTask(task)).thenReturn(Completable.complete());
     }
 }

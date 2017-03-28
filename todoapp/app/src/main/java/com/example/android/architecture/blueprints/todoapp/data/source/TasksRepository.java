@@ -167,10 +167,11 @@ public class TasksRepository implements TasksDataSource {
      * Get the tasks from the remote data source and save them in the local data source.
      */
     @Override
-    public Observable<List<Task>> refreshTasks() {
+    public Completable refreshTasks() {
         return mTasksRemoteDataSource.getTasks()
                 .subscribeOn(mBaseSchedulerProvider.io())
-                .doOnNext(mTasksLocalDataSource::saveTasks);
+                .doOnNext(mTasksLocalDataSource::saveTasks)
+                .toCompletable();
     }
 
     /**

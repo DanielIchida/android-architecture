@@ -56,7 +56,7 @@ public interface TasksDataSource {
     void clearCompletedTasks();
 
     @NonNull
-    Observable<List<Task>> refreshTasks();
+    Completable refreshTasks();
 
     void deleteAllTasks();
 

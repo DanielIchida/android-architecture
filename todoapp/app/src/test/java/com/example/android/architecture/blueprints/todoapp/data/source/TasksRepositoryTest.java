@@ -36,7 +36,6 @@ import rx.Observable;
 import rx.observers.TestSubscriber;
 
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -164,8 +163,6 @@ public class TasksRepositoryTest {
 
         // The completable completes with error
         mTestSubscriber.assertError(exception);
-        // The task is not completed in the remote data source
-        verify(mTasksRemoteDataSource, never()).completeTask(ACTIVE_TASK);
     }
 
     @Test
@@ -311,7 +308,7 @@ public class TasksRepositoryTest {
                 .subscribe(mTasksTestSubscriber);
 
         // The correct task are emitted
-        mTasksTestSubscriber.assertValue(TASKS);
+        mTasksTestSubscriber.assertCompleted();
     }
 
 
@@ -324,7 +321,7 @@ public class TasksRepositoryTest {
 
         ArrangeBuilder withTasksAvailable(TasksDataSource dataSource, List<Task> tasks) {
             // don't allow the data sources to complete.
-            when(dataSource.getTasks()).thenReturn(Observable.just(tasks).concatWith(Observable.<List<Task>>never()));
+            when(dataSource.getTasks()).thenReturn(Observable.just(tasks));
             return this;
         }
 

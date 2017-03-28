@@ -56,6 +56,8 @@ public class StatisticsViewModel {
 
         Observable<Task> tasks = mTasksRepository
                 .refreshTasks()
+                .andThen(mTasksRepository.getTasks()
+                        .first())
                 .flatMap(Observable::from);
 
         Observable<Integer> completedTasks = tasks.filter(Task::isCompleted).count();

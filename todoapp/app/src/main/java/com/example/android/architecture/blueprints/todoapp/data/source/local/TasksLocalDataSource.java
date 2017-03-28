@@ -202,8 +202,8 @@ public class TasksLocalDataSource implements TasksDataSource {
     }
 
     @Override
-    public Observable<List<Task>> refreshTasks() {
-        return getTasks();
+    public Completable refreshTasks() {
+        return Completable.complete();
     }
 
     @Override
