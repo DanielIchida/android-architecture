@@ -23,6 +23,7 @@ import rx.Observable;
 import rx.observers.TestSubscriber;
 
 import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ACTIVE_TASKS;
+import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ALL_TASKS;
 import static com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.COMPLETED_TASKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,7 +31,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,8 +57,6 @@ public class TasksViewModelTest {
 
     private TestSubscriber<Integer> mSnackbarTextSubscriber;
 
-    private TestSubscriber<Integer> mFilterTextSubscriber;
-
     private TestSubscriber mCompletableSubscriber;
 
     @Before
@@ -78,7 +76,6 @@ public class TasksViewModelTest {
         mTasksSubscriber = new TestSubscriber<>();
         mProgressIndicatorSubscriber = new TestSubscriber<>();
         mSnackbarTextSubscriber = new TestSubscriber<>();
-        mFilterTextSubscriber = new TestSubscriber<>();
         mCompletableSubscriber = new TestSubscriber<>();
     }
 
@@ -110,11 +107,8 @@ public class TasksViewModelTest {
 
     @Test
     public void getTasksModel_emits_whenTasks() {
-        // Given that the task repository returns tasks
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
-
-        // When subscribed to the tasks
-        mViewModel.getTasksModel().subscribe(mTasksSubscriber);
+        // Given that we are subscribed to the emissions of the UI model
+        withTasksInRepositoryAndSubscribed(TASKS);
 
         // The tasks model containing the list of tasks is emitted
         mTasksSubscriber.assertValueCount(1);
@@ -124,10 +118,8 @@ public class TasksViewModelTest {
 
     @Test
     public void getTask_emits_whenFilterSet() {
-        // Given that the task repository returns tasks
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
-        // Given that we are subscribed to the tasks
-        mViewModel.getTasksModel().subscribe(mTasksSubscriber);
+        // Given that we are subscribed to the emissions of the UI model
+        withTasksInRepositoryAndSubscribed(TASKS);
 
         // When setting a new filter
         mViewModel.filter(ACTIVE_TASKS);
@@ -255,10 +247,8 @@ public class TasksViewModelTest {
 
     @Test
     public void getTaskModelEmits_whenTaskAdded_withResultOk() {
-        // Given that the task repository returns tasks
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
-        // Given that we are subscribed to the tasks model
-        mViewModel.getTasksModel().subscribe(mTasksSubscriber);
+        // Given that we are subscribed to the emissions of the UI model
+        withTasksInRepositoryAndSubscribed(TASKS);
 
         // When handling activity result for a task added successfully
         mViewModel.handleActivityResult(AddEditTaskActivity.REQUEST_ADD_TASK, Activity.RESULT_OK);
@@ -280,39 +270,42 @@ public class TasksViewModelTest {
     }
 
     @Test
-    public void filterText_emits_whenFilterAllSet() {
-        // Given that we are subscribed to the filter text
-        mViewModel.getFilterText().subscribe(mFilterTextSubscriber);
+    public void tasksModel_emits_whenFilterAllSet() {
+        // Given that we are subscribed to the emissions of the UI model
+        withTaskInRepositoryAndSubscribed(ACTIVE_TASK);
 
         // When setting the filter to all
         mViewModel.filter(ALL_TASKS);
 
-        // The filter text emits correct value
-        mFilterTextSubscriber.assertValues(R.string.label_all);
+        // The UI model contains the correct filter text
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
+        assertEquals(model.getFilterResId(), R.string.label_all);
     }
 
     @Test
-    public void filterText_emits_whenFilterActiveSet() {
-        // Given that we are subscribed to the filter text
-        mViewModel.getFilterText().subscribe(mFilterTextSubscriber);
+    public void tasksModel_emits_whenFilterActiveSet() {
+        // Given that we are subscribed to the emissions of the UI model
+        withTaskInRepositoryAndSubscribed(ACTIVE_TASK);
 
         // When setting the filter to active
         mViewModel.filter(ACTIVE_TASKS);
 
-        // The filter text emits correct value
-        mFilterTextSubscriber.assertValues(R.string.label_all, R.string.label_active);
+        // The UI model contains the correct filter text
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
+        assertEquals(model.getFilterResId(), R.string.label_active);
     }
 
     @Test
-    public void filterText_emits_whenFilterCompletedSet() {
-        // Given that we are subscribed to the filter text
-        mViewModel.getFilterText().subscribe(mFilterTextSubscriber);
+    public void tasksModel_emits_whenFilterCompletedSet() {
+        // Given that we are subscribed to the emissions of the UI model
+        withTaskInRepositoryAndSubscribed(ACTIVE_TASK);
 
         // When setting the filter to completed
         mViewModel.filter(COMPLETED_TASKS);
 
-        // The filter text emits correct value
-        mFilterTextSubscriber.assertValues(R.string.label_all, R.string.label_completed);
+        // The UI model contains the correct filter text
+        TasksUiModel model = mTasksSubscriber.getOnNextEvents().get(1);
+        assertEquals(model.getFilterResId(), R.string.label_completed);
     }
 
     @Test
@@ -433,10 +426,8 @@ public class TasksViewModelTest {
 
     @Test
     public void clearCompletedTask_triggersGetTasksEmission() {
-        // Given that the task repository returns tasks
-        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
-        // Given that we are subscribed to the tasks
-        mViewModel.getTasksModel().subscribe(mTasksSubscriber);
+        // Given that we are subscribed to the emissions of the UI model
+        withTasksInRepositoryAndSubscribed(TASKS);
 
         // When clearing completed tasks
         mViewModel.clearCompletedTasks().subscribe();
@@ -463,6 +454,7 @@ public class TasksViewModelTest {
         assertTaskItems(model.getItemList());
         assertFalse(model.isNoTasksViewVisible());
         assertNull(model.getNoTasksModel());
+        assertEquals(model.getFilterResId(), R.string.label_all);
     }
 
     private void assertTaskItems(List<TaskItem> items) {
@@ -484,6 +476,10 @@ public class TasksViewModelTest {
     private void withTaskInRepositoryAndSubscribed(Task task) {
         List<Task> tasks = new ArrayList<>();
         tasks.add(task);
+        withTasksInRepositoryAndSubscribed(tasks);
+    }
+
+    private void withTasksInRepositoryAndSubscribed(List<Task> tasks){
         // Given that the task repository returns tasks
         when(mTasksRepository.getTasks()).thenReturn(Observable.just(tasks));
         // Given that we are subscribed to the tasks
@@ -493,6 +489,7 @@ public class TasksViewModelTest {
     private void withTaskCompleted(Task task) {
         when(mTasksRepository.completeTask(task)).thenReturn(Completable.complete());
     }
+
     private void withTaskActivated(Task task) {
         when(mTasksRepository.activateTask(task)).thenReturn(Completable.complete());
     }
