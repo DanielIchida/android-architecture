@@ -121,7 +121,6 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
 
     public Completable refreshTasks() {
         return Completable.complete();
-
     }
 
     @Override

@@ -251,7 +251,7 @@ public class TasksFragment extends Fragment {
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        //onNext
+                        //onCompleted
                         () -> {
                             // nothing to do here
                         },
