@@ -89,8 +89,7 @@ public class TasksRepository implements TasksDataSource {
      */
     @Override
     public Observable<List<Task>> getTasks() {
-        return mTasksLocalDataSource.getTasks()
-                .share();
+        return mTasksLocalDataSource.getTasks();
     }
 
     /**

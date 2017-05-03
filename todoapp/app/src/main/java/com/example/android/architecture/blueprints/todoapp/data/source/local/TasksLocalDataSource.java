@@ -89,6 +89,10 @@ public class TasksLocalDataSource implements TasksDataSource {
         return new Task(title, description, itemId, completed);
     }
 
+    /**
+     * @return an Observable that emits the list of tasks in the database, every time the Tasks
+     * table is modified
+     */
     @Override
     public Observable<List<Task>> getTasks() {
         String[] projection = {

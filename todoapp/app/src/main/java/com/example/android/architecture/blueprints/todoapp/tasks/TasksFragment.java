@@ -198,7 +198,7 @@ public class TasksFragment extends Fragment {
         // Set the scrolling view in the custom SwipeRefreshLayout.
         swipeRefreshLayout.setScrollUpChild(listView);
 
-        swipeRefreshLayout.setOnRefreshListener(() -> forceUpdate());
+        swipeRefreshLayout.setOnRefreshListener(this::forceUpdate);
     }
 
     private void setupFabButton() {
@@ -237,7 +237,7 @@ public class TasksFragment extends Fragment {
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        //onNext
+                        //onCompleted
                         () -> {
                             // nothing to do here
                         },
