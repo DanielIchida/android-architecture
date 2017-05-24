@@ -18,6 +18,7 @@ package com.example.android.architecture.blueprints.todoapp.data;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 
@@ -34,6 +35,8 @@ import rx.Observable;
  * Implementation of a remote data source with static access to the data for easy testing.
  */
 public class FakeTasksRemoteDataSource implements TasksDataSource {
+
+    private static final String TAG = FakeTasksRemoteDataSource.class.getSimpleName();
 
     private static final Map<String, Task> TASKS_SERVICE_DATA = new LinkedHashMap<>();
     private static FakeTasksRemoteDataSource INSTANCE;
@@ -62,16 +65,22 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
     }
 
     @Override
-    public Completable saveTask(@NonNull Task task) {
-        return Completable.fromAction(() -> TASKS_SERVICE_DATA.put(task.getId(), task));
+    public void saveTask(@NonNull Task task) {
+        Completable.fromAction(() -> TASKS_SERVICE_DATA.put(task.getId(), task))
+                .subscribe(() -> {
+                    // nothing to do here when completed
+                }, throwable -> Log.e(TAG, "Could not save task", throwable));
     }
 
 
     @Override
-    public Completable saveTasks(@NonNull List<Task> tasks) {
-        return Observable.from(tasks)
+    public void saveTasks(@NonNull List<Task> tasks) {
+        Observable.from(tasks)
                 .doOnNext(this::saveTask)
-                .toCompletable();
+                .toCompletable()
+                .subscribe(() -> {
+                    // nothing to do here when completed
+                }, throwable -> Log.e(TAG, "Could not save tasks", throwable));
     }
 
     @Override

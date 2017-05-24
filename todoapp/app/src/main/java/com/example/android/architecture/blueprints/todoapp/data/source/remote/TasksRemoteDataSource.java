@@ -17,6 +17,7 @@
 package com.example.android.architecture.blueprints.todoapp.data.source.remote;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
@@ -34,6 +35,8 @@ import rx.Observable;
  * Implementation of the data source that adds a latency simulating network.
  */
 public class TasksRemoteDataSource implements TasksDataSource {
+
+    private static final String TAG = TasksRemoteDataSource.class.getSimpleName();
 
     private static TasksRemoteDataSource INSTANCE;
 
@@ -82,15 +85,21 @@ public class TasksRemoteDataSource implements TasksDataSource {
     }
 
     @Override
-    public Completable saveTask(@NonNull Task task) {
-        return Completable.fromAction(() -> TASKS_SERVICE_DATA.put(task.getId(), task));
+    public void saveTask(@NonNull Task task) {
+        Completable.fromAction(() -> TASKS_SERVICE_DATA.put(task.getId(), task))
+                .subscribe(() -> {
+                    // nothing to do here
+                }, throwable -> Log.e(TAG, "Could not save task", throwable));
     }
 
     @Override
-    public Completable saveTasks(@NonNull List<Task> tasks) {
-        return Observable.from(tasks)
+    public void saveTasks(@NonNull List<Task> tasks) {
+        Observable.from(tasks)
                 .doOnNext(this::saveTask)
-                .toCompletable();
+                .toCompletable()
+                .subscribe(() -> {
+                    // nothing to do here
+                }, throwable -> Log.e(TAG, "Could not save tasks", throwable));
     }
 
     @Override

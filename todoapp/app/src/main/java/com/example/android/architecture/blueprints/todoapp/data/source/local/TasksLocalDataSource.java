@@ -23,6 +23,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
@@ -44,6 +45,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Concrete implementation of a data source as a db.
  */
 public class TasksLocalDataSource implements TasksDataSource {
+
+    private static final String TAG = TasksLocalDataSource.class.getSimpleName();
 
     @Nullable
     private static TasksLocalDataSource INSTANCE;
@@ -121,22 +124,28 @@ public class TasksLocalDataSource implements TasksDataSource {
     }
 
     @Override
-    public Completable saveTask(@NonNull Task task) {
+    public void saveTask(@NonNull Task task) {
         checkNotNull(task);
-        return Completable.fromAction(() -> {
+        Completable.fromAction(() -> {
             ContentValues values = toContentValues(task);
             mDatabaseHelper.insert(TaskEntry.TABLE_NAME, values, SQLiteDatabase.CONFLICT_REPLACE);
-        });
+        }).subscribe(() -> {
+            // nothing to do here
+        }, throwable -> Log.e(TAG, "Could not save task", throwable));
+        ;
     }
 
     @Override
-    public Completable saveTasks(@NonNull List<Task> tasks) {
+    public void saveTasks(@NonNull List<Task> tasks) {
         checkNotNull(tasks);
 
-        return Observable.using(mDatabaseHelper::newTransaction,
+        Observable.using(mDatabaseHelper::newTransaction,
                 transaction -> inTransactionInsert(tasks, transaction),
                 BriteDatabase.Transaction::end)
-                .toCompletable();
+                .toCompletable()
+                .subscribe(() -> {
+                    // nothing to do here
+                }, throwable -> Log.e(TAG, "Could not save tasks", throwable));
     }
 
     @NonNull

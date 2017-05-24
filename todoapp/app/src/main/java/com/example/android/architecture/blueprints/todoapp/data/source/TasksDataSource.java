@@ -38,10 +38,10 @@ public interface TasksDataSource {
     Observable<Task> getTask(@NonNull String taskId);
 
     @NonNull
-    Completable saveTask(@NonNull Task task);
+    void saveTask(@NonNull Task task);
 
     @NonNull
-    Completable saveTasks(@NonNull List<Task> tasks);
+    void saveTasks(@NonNull List<Task> tasks);
 
     @NonNull
     Completable completeTask(@NonNull Task task);

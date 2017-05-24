@@ -100,10 +100,11 @@ public class TasksRepository implements TasksDataSource {
      */
     @NonNull
     @Override
-    public Completable saveTask(@NonNull Task task) {
+    public void saveTask(@NonNull Task task) {
         checkNotNull(task);
-        return mTasksLocalDataSource.saveTask(task)
-                .andThen(mTasksRemoteDataSource.saveTask(task));
+        Completable.fromAction(() -> mTasksLocalDataSource.saveTask(task))
+                .andThen(Completable.fromAction(() -> mTasksRemoteDataSource.saveTask(task)))
+
     }
 
     /**
@@ -113,7 +114,7 @@ public class TasksRepository implements TasksDataSource {
      * @return a completable that emits when the tasks were saved or in case of error.
      */
     @Override
-    public Completable saveTasks(@NonNull List<Task> tasks) {
+    public void saveTasks(@NonNull List<Task> tasks) {
         checkNotNull(tasks);
         return mTasksLocalDataSource.saveTasks(tasks)
                 .andThen(mTasksRemoteDataSource.saveTasks(tasks));
