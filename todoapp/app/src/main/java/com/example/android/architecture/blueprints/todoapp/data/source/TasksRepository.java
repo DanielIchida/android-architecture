@@ -18,6 +18,7 @@ package com.example.android.architecture.blueprints.todoapp.data.source;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
@@ -37,6 +38,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * exist or is empty.
  */
 public class TasksRepository implements TasksDataSource {
+
+    private static final String TAG = TasksRepository.class.getSimpleName();
 
     @Nullable
     private static TasksRepository INSTANCE = null;
@@ -104,6 +107,10 @@ public class TasksRepository implements TasksDataSource {
         checkNotNull(task);
         Completable.fromAction(() -> mTasksLocalDataSource.saveTask(task))
                 .andThen(Completable.fromAction(() -> mTasksRemoteDataSource.saveTask(task)))
+                .subscribeOn(mBaseSchedulerProvider.io())
+                .subscribe(() -> {
+                    // nothing to do on onComplete
+                }, err -> Log.e(TAG, "Unable to save task", err));
 
     }
 
@@ -116,8 +123,12 @@ public class TasksRepository implements TasksDataSource {
     @Override
     public void saveTasks(@NonNull List<Task> tasks) {
         checkNotNull(tasks);
-        return mTasksLocalDataSource.saveTasks(tasks)
-                .andThen(mTasksRemoteDataSource.saveTasks(tasks));
+        Completable.fromAction(() -> mTasksLocalDataSource.saveTasks(tasks))
+                .andThen(Completable.fromAction(() -> mTasksRemoteDataSource.saveTasks(tasks)))
+                .subscribeOn(mBaseSchedulerProvider.io())
+                .subscribe(() -> {
+                    // nothing to do on onComplete
+                }, err -> Log.e(TAG, "Unable to save tasks", err));
     }
 
     @Override

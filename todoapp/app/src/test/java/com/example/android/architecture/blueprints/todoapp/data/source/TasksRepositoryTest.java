@@ -103,18 +103,12 @@ public class TasksRepositoryTest {
 
     @Test
     public void saveTasks_savesTasksToRemoteDataSource() {
-        // Given that a task is saved successfully in local and remote data sources
-        new ArrangeBuilder()
-                .withTasksSaved(mTasksLocalDataSource, TASKS)
-                .withTasksSaved(mTasksRemoteDataSource, TASKS);
-
         // When a task is saved to the tasks repository
-        mTasksRepository.saveTasks(TASKS)
-                .subscribe(mTestSubscriber);
+        mTasksRepository.saveTasks(TASKS);
 
         // Then completable completes without error
-        mTestSubscriber.assertCompleted();
-        mTestSubscriber.assertNoErrors();
+        verify(mTasksLocalDataSource).saveTasks(TASKS);
+        verify(mTasksRemoteDataSource).saveTasks(TASKS);
     }
 
     @Test
@@ -125,8 +119,7 @@ public class TasksRepositoryTest {
                 .withTaskSaved(mTasksRemoteDataSource, ACTIVE_TASK);
 
         // When a task is saved to the tasks repository
-        mTasksRepository.saveTask(ACTIVE_TASK)
-                .subscribe(mTestSubscriber);
+        mTasksRepository.saveTask(ACTIVE_TASK);
 
         // Then completable completes without error
         mTestSubscriber.assertCompleted();
